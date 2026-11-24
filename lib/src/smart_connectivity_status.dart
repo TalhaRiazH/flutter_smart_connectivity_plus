@@ -1,5 +1,5 @@
-/// Current network status used by [SmartOfflineHost].
-enum SmartOfflineStatus {
+/// Current network status used by [SmartConnectivityHost].
+enum SmartConnectivityStatus {
   /// A usable network path is available.
   online,
 

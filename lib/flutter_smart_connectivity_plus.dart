@@ -5,21 +5,21 @@
 ///
 /// ```dart
 /// MaterialApp(
-///   builder: SmartOfflineHost.materialBuilder(),
+///   builder: SmartConnectivityHost.materialBuilder(),
 ///   home: const HomeScreen(),
 /// )
 /// ```
 library;
 
-export 'src/smart_offline.dart';
-export 'src/smart_offline_action.dart';
-export 'src/smart_offline_banner.dart';
-export 'src/smart_offline_config.dart';
-export 'src/smart_offline_controller.dart';
-export 'src/smart_offline_dialog.dart';
-export 'src/smart_offline_host.dart';
-export 'src/smart_offline_scope.dart';
-export 'src/smart_offline_status.dart';
-export 'src/smart_offline_submit.dart';
-export 'src/smart_offline_toast.dart';
-export 'src/smart_offline_ui.dart';
+export 'src/smart_connectivity.dart';
+export 'src/smart_connectivity_action.dart';
+export 'src/smart_connectivity_banner.dart';
+export 'src/smart_connectivity_config.dart';
+export 'src/smart_connectivity_controller.dart';
+export 'src/smart_connectivity_dialog.dart';
+export 'src/smart_connectivity_host.dart';
+export 'src/smart_connectivity_scope.dart';
+export 'src/smart_connectivity_status.dart';
+export 'src/smart_connectivity_submit.dart';
+export 'src/smart_connectivity_toast.dart';
+export 'src/smart_connectivity_ui.dart';

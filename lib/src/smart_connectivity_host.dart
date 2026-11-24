@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'smart_offline_banner.dart';
-import 'smart_offline_config.dart';
-import 'smart_offline_controller.dart';
-import 'smart_offline_dialog.dart';
-import 'smart_offline_scope.dart';
-import 'smart_offline_status.dart';
-import 'smart_offline_toast.dart';
-import 'smart_offline_ui.dart';
+import 'smart_connectivity_banner.dart';
+import 'smart_connectivity_config.dart';
+import 'smart_connectivity_controller.dart';
+import 'smart_connectivity_dialog.dart';
+import 'smart_connectivity_scope.dart';
+import 'smart_connectivity_status.dart';
+import 'smart_connectivity_toast.dart';
+import 'smart_connectivity_ui.dart';
 
 /// App-level host that watches connectivity on every screen.
 ///
@@ -17,11 +17,11 @@ import 'smart_offline_ui.dart';
 /// a banner, dialog, and/or top toast — including custom widgets. When the
 /// network returns, offline UI closes and an optional "back online" toast
 /// slides in from the top.
-class SmartOfflineHost extends StatefulWidget {
+class SmartConnectivityHost extends StatefulWidget {
   /// Creates an app-level offline host.
-  const SmartOfflineHost({
+  const SmartConnectivityHost({
     super.key,
-    this.config = const SmartOfflineConfig(),
+    this.config = const SmartConnectivityConfig(),
     this.controller,
     this.offlineBannerBuilder,
     this.offlineDialogBuilder,
@@ -31,37 +31,37 @@ class SmartOfflineHost extends StatefulWidget {
   });
 
   /// Defaults for banners, dialogs, toasts, and retries.
-  final SmartOfflineConfig config;
+  final SmartConnectivityConfig config;
 
   /// Optional controller for tests and demos. Owned by the host when null.
-  final SmartOfflineController? controller;
+  final SmartConnectivityController? controller;
 
-  /// Custom UI shown when internet is gone (banner). When null, [SmartOfflineBanner] is used.
-  final SmartOfflineWidgetBuilder? offlineBannerBuilder;
+  /// Custom UI shown when internet is gone (banner). When null, [SmartConnectivityBanner] is used.
+  final SmartConnectivityWidgetBuilder? offlineBannerBuilder;
 
-  /// Custom UI shown when internet is gone (dialog). When null, [SmartOfflineDialog] is used.
-  final SmartOfflineWidgetBuilder? offlineDialogBuilder;
+  /// Custom UI shown when internet is gone (dialog). When null, [SmartConnectivityDialog] is used.
+  final SmartConnectivityWidgetBuilder? offlineDialogBuilder;
 
   /// Custom top toast while offline.
-  final SmartOfflineWidgetBuilder? offlineToastBuilder;
+  final SmartConnectivityWidgetBuilder? offlineToastBuilder;
 
   /// Custom top toast when back online.
-  final SmartOfflineWidgetBuilder? onlineToastBuilder;
+  final SmartConnectivityWidgetBuilder? onlineToastBuilder;
 
   /// The rest of the app.
   final Widget child;
 
   /// Convenience builder for [MaterialApp.builder].
   static TransitionBuilder materialBuilder({
-    SmartOfflineConfig config = const SmartOfflineConfig(),
-    SmartOfflineController? controller,
-    SmartOfflineWidgetBuilder? offlineBannerBuilder,
-    SmartOfflineWidgetBuilder? offlineDialogBuilder,
-    SmartOfflineWidgetBuilder? offlineToastBuilder,
-    SmartOfflineWidgetBuilder? onlineToastBuilder,
+    SmartConnectivityConfig config = const SmartConnectivityConfig(),
+    SmartConnectivityController? controller,
+    SmartConnectivityWidgetBuilder? offlineBannerBuilder,
+    SmartConnectivityWidgetBuilder? offlineDialogBuilder,
+    SmartConnectivityWidgetBuilder? offlineToastBuilder,
+    SmartConnectivityWidgetBuilder? onlineToastBuilder,
   }) {
     return (context, child) {
-      return SmartOfflineHost(
+      return SmartConnectivityHost(
         config: config,
         controller: controller,
         offlineBannerBuilder: offlineBannerBuilder,
@@ -74,11 +74,11 @@ class SmartOfflineHost extends StatefulWidget {
   }
 
   @override
-  State<SmartOfflineHost> createState() => _SmartOfflineHostState();
+  State<SmartConnectivityHost> createState() => _SmartConnectivityHostState();
 }
 
-class _SmartOfflineHostState extends State<SmartOfflineHost> {
-  late SmartOfflineController _controller;
+class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
+  late SmartConnectivityController _controller;
   late final bool _ownsController;
   final GlobalKey<OverlayState> _overlayKey = GlobalKey<OverlayState>();
   OverlayEntry? _dialogEntry;
@@ -93,16 +93,16 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
     super.initState();
     _ownsController = widget.controller == null;
     _controller =
-        widget.controller ?? SmartOfflineController(config: widget.config);
+        widget.controller ?? SmartConnectivityController(config: widget.config);
     _controller.updateConfig(widget.config);
-    _hadOffline = _controller.status != SmartOfflineStatus.online;
+    _hadOffline = _controller.status != SmartConnectivityStatus.online;
     _controller.addListener(_onChange);
     _controller.start();
     _appEntry = OverlayEntry(builder: _buildAppLayer);
   }
 
   @override
-  void didUpdateWidget(SmartOfflineHost oldWidget) {
+  void didUpdateWidget(SmartConnectivityHost oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.config != widget.config) {
       _controller.updateConfig(widget.config);
@@ -112,7 +112,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
 
   void _onChange() {
     if (!mounted) return;
-    final offline = _controller.status != SmartOfflineStatus.online;
+    final offline = _controller.status != SmartConnectivityStatus.online;
     _appEntry?.markNeedsBuild();
 
     if (offline) {
@@ -130,7 +130,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
     if (shouldCelebrate && widget.config.showOnlineToast) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        if (_controller.status != SmartOfflineStatus.online) return;
+        if (_controller.status != SmartConnectivityStatus.online) return;
         _showOnlineToast();
       });
     }
@@ -141,7 +141,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
       _offlineNotified = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _dialogEntry != null) return;
-        if (_controller.status == SmartOfflineStatus.online) return;
+        if (_controller.status == SmartConnectivityStatus.online) return;
         _insertDialog();
       });
     }
@@ -149,7 +149,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
     if (widget.config.showOfflineToast && _toastEntry == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _toastEntry != null) return;
-        if (_controller.status == SmartOfflineStatus.online) return;
+        if (_controller.status == SmartConnectivityStatus.online) return;
         _showOfflineToast();
       });
     }
@@ -165,7 +165,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
         return ListenableBuilder(
           listenable: _controller,
           builder: (context, _) {
-            if (_controller.status == SmartOfflineStatus.online) {
+            if (_controller.status == SmartConnectivityStatus.online) {
               return const SizedBox.shrink();
             }
             final dialog = builder?.call(
@@ -173,7 +173,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
                   _controller,
                   widget.config,
                 ) ??
-                SmartOfflineDialog(
+                SmartConnectivityDialog(
                   controller: _controller,
                   config: widget.config,
                   onDismiss: _removeDialog,
@@ -198,7 +198,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
   }
 
   void _showOfflineToast() {
-    final message = _controller.status == SmartOfflineStatus.flaky
+    final message = _controller.status == SmartConnectivityStatus.flaky
         ? widget.config.flakyMessage
         : widget.config.offlineMessage;
     _showToast(
@@ -209,7 +209,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
               _controller,
               widget.config,
             ) ??
-            SmartOfflineToast(
+            SmartConnectivityToast(
               message: message,
               backgroundColor: const Color(0xFF7F1D1D),
               icon: Icons.wifi_off_rounded,
@@ -227,7 +227,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
               _controller,
               widget.config,
             ) ??
-            SmartOfflineToast(
+            SmartConnectivityToast(
               message: widget.config.onlineMessage,
               backgroundColor: const Color(0xFF065F46),
               icon: Icons.wifi_rounded,
@@ -274,7 +274,7 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
 
   Widget _buildAppLayer(BuildContext context) {
     final showBanner = widget.config.showBanner &&
-        _controller.status != SmartOfflineStatus.online;
+        _controller.status != SmartConnectivityStatus.online;
 
     Widget? banner;
     if (showBanner) {
@@ -283,13 +283,13 @@ class _SmartOfflineHostState extends State<SmartOfflineHost> {
             _controller,
             widget.config,
           ) ??
-          SmartOfflineBanner(
+          SmartConnectivityBanner(
             controller: _controller,
             config: widget.config,
           );
     }
 
-    return SmartOfflineScope(
+    return SmartConnectivityScope(
       controller: _controller,
       config: widget.config,
       child: Column(

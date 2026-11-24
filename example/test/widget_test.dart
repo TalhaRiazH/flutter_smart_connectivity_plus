@@ -5,6 +5,6 @@ void main() {
   testWidgets('example loads', (tester) async {
     await tester.pumpWidget(const OfflineDemoApp());
     await tester.pump();
-    expect(find.text('Smart Offline'), findsOneWidget);
+    expect(find.text('Smart Connectivity'), findsOneWidget);
   });
 }

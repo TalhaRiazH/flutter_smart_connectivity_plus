@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      builder: SmartOfflineHost.materialBuilder(),
+      builder: SmartConnectivityHost.materialBuilder(),
       home: const HomeScreen(),
     );
   }
@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
 ## Queue work from any screen
 
 ```dart
-final offline = SmartOffline.of(context);
+final offline = SmartConnectivity.of(context);
 
 await offline.runOrEnqueue('sync-profile', () async {
   await api.syncProfile();
@@ -62,7 +62,7 @@ If the device is online, the task runs now. If not, it waits in the queue and ru
 ## Submit button that respects offline
 
 ```dart
-SmartOfflineSubmit(
+SmartConnectivitySubmit(
   actionId: 'checkout',
   onPressed: () async => api.checkout(),
   child: const Text('Pay now'),
@@ -81,8 +81,8 @@ on top of the current route. When the internet returns:
 ## Banner, dialog, toast
 
 ```dart
-SmartOfflineHost.materialBuilder(
-  config: const SmartOfflineConfig(
+SmartConnectivityHost.materialBuilder(
+  config: const SmartConnectivityConfig(
     showBanner: true,        // persistent strip on every screen
     showDialog: true,        // alert when the network drops
     showOfflineToast: true,  // top toast when offline
@@ -97,8 +97,8 @@ SmartOfflineHost.materialBuilder(
 Pass your own widgets. The host still decides when to show and hide them.
 
 ```dart
-SmartOfflineHost.materialBuilder(
-  config: const SmartOfflineConfig(
+SmartConnectivityHost.materialBuilder(
+  config: const SmartConnectivityConfig(
     showBanner: true,
     showDialog: true,
     showOnlineToast: true,
@@ -144,8 +144,8 @@ Every parameter is optional.
 
 ```dart
 MaterialApp(
-  builder: SmartOfflineHost.materialBuilder(
-    config: const SmartOfflineConfig(
+  builder: SmartConnectivityHost.materialBuilder(
+    config: const SmartConnectivityConfig(
       showDialog: true,
       offlineMessage: 'No internet. We will retry when you are back.',
       maxRetries: 5,
@@ -158,17 +158,17 @@ MaterialApp(
 ## Demo offline without airplane mode
 
 ```dart
-final controller = SmartOfflineController(
-  statusOverride: SmartOfflineStatus.online,
+final controller = SmartConnectivityController(
+  statusOverride: SmartConnectivityStatus.online,
 );
 
 MaterialApp(
-  builder: SmartOfflineHost.materialBuilder(controller: controller),
+  builder: SmartConnectivityHost.materialBuilder(controller: controller),
   home: const HomeScreen(),
 );
 
 // Later:
-controller.debugOverrideStatus(SmartOfflineStatus.offline);
+controller.debugOverrideStatus(SmartConnectivityStatus.offline);
 ```
 
 ## Example app

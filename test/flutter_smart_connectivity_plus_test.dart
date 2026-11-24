@@ -4,25 +4,25 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('default config keeps banner and auto-retry on', () {
-    const config = SmartOfflineConfig();
+    const config = SmartConnectivityConfig();
     expect(config.showBanner, isTrue);
     expect(config.autoRetry, isTrue);
     expect(config.maxRetries, 3);
-    expect(config, equals(const SmartOfflineConfig()));
+    expect(config, equals(const SmartConnectivityConfig()));
   });
 
   test('enqueue dedupes by id', () async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
-      config: const SmartOfflineConfig(autoRetry: false),
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
+      config: const SmartConnectivityConfig(autoRetry: false),
     );
     await controller.start();
 
     controller.enqueue(
-      SmartOfflineAction(id: 'sync', run: () async {}),
+      SmartConnectivityAction(id: 'sync', run: () async {}),
     );
     controller.enqueue(
-      SmartOfflineAction(id: 'sync', run: () async {}),
+      SmartConnectivityAction(id: 'sync', run: () async {}),
     );
 
     expect(controller.queueLength, 1);
@@ -30,9 +30,9 @@ void main() {
   });
 
   test('runOrEnqueue queues while offline and runs while online', () async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
-      config: const SmartOfflineConfig(autoRetry: false),
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
+      config: const SmartConnectivityConfig(autoRetry: false),
     );
     await controller.start();
 
@@ -44,7 +44,7 @@ void main() {
     expect(controller.queueLength, 1);
     expect(ran, 0);
 
-    controller.debugOverrideStatus(SmartOfflineStatus.online);
+    controller.debugOverrideStatus(SmartConnectivityStatus.online);
     final ranNow = await controller.runOrEnqueue('other', () async {
       ran += 1;
     });
@@ -54,15 +54,15 @@ void main() {
   });
 
   test('flush runs queued work when online', () async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
-      config: const SmartOfflineConfig(autoRetry: false),
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
+      config: const SmartConnectivityConfig(autoRetry: false),
     );
     await controller.start();
 
     var ran = 0;
     controller.enqueue(
-      SmartOfflineAction(
+      SmartConnectivityAction(
         id: 'a',
         run: () async {
           ran += 1;
@@ -70,7 +70,7 @@ void main() {
       ),
     );
 
-    controller.debugOverrideStatus(SmartOfflineStatus.online);
+    controller.debugOverrideStatus(SmartConnectivityStatus.online);
     await controller.flush();
 
     expect(ran, 1);
@@ -79,9 +79,9 @@ void main() {
   });
 
   test('maxRetries drops a failing action', () async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.online,
-      config: const SmartOfflineConfig(
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.online,
+      config: const SmartConnectivityConfig(
         autoRetry: false,
         maxRetries: 1,
         retryDelay: Duration.zero,
@@ -90,7 +90,7 @@ void main() {
     await controller.start();
 
     controller.enqueue(
-      SmartOfflineAction(
+      SmartConnectivityAction(
         id: 'fail',
         run: () async {
           throw StateError('nope');
@@ -104,14 +104,14 @@ void main() {
   });
 
   test('remove and clearQueue update the queue', () async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
-      config: const SmartOfflineConfig(autoRetry: false),
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
+      config: const SmartConnectivityConfig(autoRetry: false),
     );
     await controller.start();
 
-    controller.enqueue(SmartOfflineAction(id: 'one', run: () async {}));
-    controller.enqueue(SmartOfflineAction(id: 'two', run: () async {}));
+    controller.enqueue(SmartConnectivityAction(id: 'one', run: () async {}));
+    controller.enqueue(SmartConnectivityAction(id: 'two', run: () async {}));
     controller.remove('one');
     expect(controller.queueLength, 1);
     controller.clearQueue();
@@ -120,13 +120,13 @@ void main() {
   });
 
   testWidgets('host shows banner when offline', (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(controller: controller),
+        builder: SmartConnectivityHost.materialBuilder(controller: controller),
         home: const Scaffold(body: Text('home')),
       ),
     );
@@ -137,16 +137,16 @@ void main() {
   });
 
   testWidgets('submit does not double-enqueue the same id', (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
-      config: const SmartOfflineConfig(autoRetry: false),
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
+      config: const SmartConnectivityConfig(autoRetry: false),
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(controller: controller),
+        builder: SmartConnectivityHost.materialBuilder(controller: controller),
         home: Scaffold(
-          body: SmartOfflineSubmit(
+          body: SmartConnectivitySubmit(
             actionId: 'pay',
             onPressed: () async {},
             child: const Text('Pay'),
@@ -165,22 +165,22 @@ void main() {
   });
 
   testWidgets('host shows dialog when showDialog is true', (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.online,
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.online,
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(
+        builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
-          config: const SmartOfflineConfig(showDialog: true),
+          config: const SmartConnectivityConfig(showDialog: true),
         ),
         home: const Scaffold(body: Text('home')),
       ),
     );
     await tester.pump();
 
-    controller.debugOverrideStatus(SmartOfflineStatus.offline);
+    controller.debugOverrideStatus(SmartConnectivityStatus.offline);
     await tester.pump();
     await tester.pump();
 
@@ -190,15 +190,15 @@ void main() {
 
   testWidgets('shows back-online toast and closes offline dialog',
       (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.online,
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.online,
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(
+        builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
-          config: const SmartOfflineConfig(
+          config: const SmartConnectivityConfig(
             showDialog: true,
             showOnlineToast: true,
             onlineToastDuration: Duration(seconds: 5),
@@ -209,12 +209,12 @@ void main() {
     );
     await tester.pump();
 
-    controller.debugOverrideStatus(SmartOfflineStatus.offline);
+    controller.debugOverrideStatus(SmartConnectivityStatus.offline);
     await tester.pump();
     await tester.pump();
     expect(find.text('No internet connection'), findsOneWidget);
 
-    controller.debugOverrideStatus(SmartOfflineStatus.online);
+    controller.debugOverrideStatus(SmartConnectivityStatus.online);
     await tester.pump();
     await tester.pump();
 
@@ -223,13 +223,13 @@ void main() {
   });
 
   testWidgets('host uses a custom banner builder', (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.offline,
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.offline,
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(
+        builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
           offlineBannerBuilder: (context, offlineController, config) {
             return const ColoredBox(
@@ -250,17 +250,18 @@ void main() {
     expect(find.text('You are offline'), findsNothing);
   });
 
-  testWidgets('SmartOffline.of returns the host controller', (tester) async {
-    final controller = SmartOfflineController(
-      statusOverride: SmartOfflineStatus.online,
+  testWidgets('SmartConnectivity.of returns the host controller',
+      (tester) async {
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.online,
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartOfflineHost.materialBuilder(controller: controller),
+        builder: SmartConnectivityHost.materialBuilder(controller: controller),
         home: Builder(
           builder: (context) {
-            return Text(SmartOffline.of(context).isOnline ? 'up' : 'down');
+            return Text(SmartConnectivity.of(context).isOnline ? 'up' : 'down');
           },
         ),
       ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.dart';
 
-final SmartOfflineController demoController = SmartOfflineController(
-  statusOverride: SmartOfflineStatus.online,
+final SmartConnectivityController demoController = SmartConnectivityController(
+  statusOverride: SmartConnectivityStatus.online,
 );
 
 Future<void> main() async {
@@ -22,9 +22,9 @@ class OfflineDemoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7490)),
         useMaterial3: true,
       ),
-      builder: SmartOfflineHost.materialBuilder(
+      builder: SmartConnectivityHost.materialBuilder(
         controller: demoController,
-        config: const SmartOfflineConfig(
+        config: const SmartConnectivityConfig(
           showBanner: true,
           showDialog: true,
           showOfflineToast: true,
@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final queue = demoController.queueLength;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Smart Offline')),
+      appBar: AppBar(title: const Text('Smart Connectivity')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         children: [
@@ -103,12 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Force offline'),
-            value: demoController.status == SmartOfflineStatus.offline,
+            value: demoController.status == SmartConnectivityStatus.offline,
             onChanged: (offline) {
               demoController.debugOverrideStatus(
                 offline
-                    ? SmartOfflineStatus.offline
-                    : SmartOfflineStatus.online,
+                    ? SmartConnectivityStatus.offline
+                    : SmartConnectivityStatus.online,
               );
             },
           ),
@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Open another screen'),
           ),
           const SizedBox(height: 12),
-          SmartOfflineSubmit(
+          SmartConnectivitySubmit(
             actionId: 'sync-profile',
             onPressed: _fakeSync,
             child: const Text('Sync profile'),

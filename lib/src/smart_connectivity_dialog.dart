@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'smart_offline_config.dart';
-import 'smart_offline_controller.dart';
-import 'smart_offline_status.dart';
+import 'smart_connectivity_config.dart';
+import 'smart_connectivity_controller.dart';
+import 'smart_connectivity_status.dart';
 
 /// Default alert shown when the network drops.
-class SmartOfflineDialog extends StatelessWidget {
+class SmartConnectivityDialog extends StatelessWidget {
   /// Creates the default offline dialog content.
-  const SmartOfflineDialog({
+  const SmartConnectivityDialog({
     super.key,
     required this.controller,
     required this.config,
@@ -15,17 +15,17 @@ class SmartOfflineDialog extends StatelessWidget {
   });
 
   /// Live offline state and queue.
-  final SmartOfflineController controller;
+  final SmartConnectivityController controller;
 
   /// Copy and retry settings.
-  final SmartOfflineConfig config;
+  final SmartConnectivityConfig config;
 
   /// Called when the user closes the dialog.
   final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
-    final message = controller.status == SmartOfflineStatus.flaky
+    final message = controller.status == SmartConnectivityStatus.flaky
         ? config.flakyMessage
         : config.offlineMessage;
     final showRetry = config.showRetryButton && controller.queueLength > 0;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Top toast used for offline and back-online messages.
-class SmartOfflineToast extends StatelessWidget {
+class SmartConnectivityToast extends StatelessWidget {
   /// Creates a top toast.
-  const SmartOfflineToast({
+  const SmartConnectivityToast({
     super.key,
     required this.message,
     this.backgroundColor = const Color(0xFF111827),

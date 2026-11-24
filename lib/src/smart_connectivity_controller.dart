@@ -3,47 +3,47 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
-import 'smart_offline_action.dart';
-import 'smart_offline_config.dart';
-import 'smart_offline_status.dart';
+import 'smart_connectivity_action.dart';
+import 'smart_connectivity_config.dart';
+import 'smart_connectivity_status.dart';
 
 /// Tracks connectivity and a queue of actions waiting for a good network.
-class SmartOfflineController extends ChangeNotifier {
+class SmartConnectivityController extends ChangeNotifier {
   /// Creates a controller with [config].
   ///
   /// Pass [connectivity] in tests. Pass [statusOverride] to force a status
   /// without reading the device network (example / widget tests).
-  SmartOfflineController({
-    SmartOfflineConfig config = const SmartOfflineConfig(),
+  SmartConnectivityController({
+    SmartConnectivityConfig config = const SmartConnectivityConfig(),
     Connectivity? connectivity,
-    SmartOfflineStatus? statusOverride,
+    SmartConnectivityStatus? statusOverride,
   })  : _config = config,
         _connectivity = connectivity ?? Connectivity(),
         _statusOverride = statusOverride,
-        _status = statusOverride ?? SmartOfflineStatus.online;
+        _status = statusOverride ?? SmartConnectivityStatus.online;
 
   final Connectivity _connectivity;
-  SmartOfflineConfig _config;
-  SmartOfflineStatus _status;
-  SmartOfflineStatus? _statusOverride;
-  final List<SmartOfflineAction> _queue = [];
+  SmartConnectivityConfig _config;
+  SmartConnectivityStatus _status;
+  SmartConnectivityStatus? _statusOverride;
+  final List<SmartConnectivityAction> _queue = [];
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   bool _flushing = false;
 
   /// Current offline settings.
-  SmartOfflineConfig get config => _config;
+  SmartConnectivityConfig get config => _config;
 
   /// Latest known network status.
-  SmartOfflineStatus get status => _status;
+  SmartConnectivityStatus get status => _status;
 
   /// Whether the app can send network requests right now.
-  bool get isOnline => _status == SmartOfflineStatus.online;
+  bool get isOnline => _status == SmartConnectivityStatus.online;
 
   /// Whether a flush is currently running.
   bool get isFlushing => _flushing;
 
   /// Actions waiting for a good connection.
-  List<SmartOfflineAction> get queue => List.unmodifiable(_queue);
+  List<SmartConnectivityAction> get queue => List.unmodifiable(_queue);
 
   /// Number of actions waiting in the queue.
   int get queueLength => _queue.length;
@@ -70,14 +70,14 @@ class SmartOfflineController extends ChangeNotifier {
   }
 
   /// Replaces [config] at runtime.
-  void updateConfig(SmartOfflineConfig config) {
+  void updateConfig(SmartConnectivityConfig config) {
     if (_config == config) return;
     _config = config;
     notifyListeners();
   }
 
   /// Forces [status] for demos and tests. Pass `null` to follow the device again.
-  void debugOverrideStatus(SmartOfflineStatus? status) {
+  void debugOverrideStatus(SmartConnectivityStatus? status) {
     _statusOverride = status;
     if (status == null) {
       unawaited(_refreshFromConnectivity());
@@ -91,28 +91,28 @@ class SmartOfflineController extends ChangeNotifier {
     }
   }
 
-  /// Marks the connection as [SmartOfflineStatus.flaky] for tests or probes.
+  /// Marks the connection as [SmartConnectivityStatus.flaky] for tests or probes.
   void markFlaky() {
-    if (_status == SmartOfflineStatus.flaky) return;
-    _status = SmartOfflineStatus.flaky;
-    _statusOverride ??= SmartOfflineStatus.flaky;
+    if (_status == SmartConnectivityStatus.flaky) return;
+    _status = SmartConnectivityStatus.flaky;
+    _statusOverride ??= SmartConnectivityStatus.flaky;
     notifyListeners();
   }
 
   /// Runs [task] now when online. Otherwise queues it under [id].
   ///
   /// Returns `true` when the task ran immediately.
-  Future<bool> runOrEnqueue(String id, SmartOfflineTask task) async {
+  Future<bool> runOrEnqueue(String id, SmartConnectivityTask task) async {
     if (isOnline) {
       await task();
       return true;
     }
-    enqueue(SmartOfflineAction(id: id, run: task));
+    enqueue(SmartConnectivityAction(id: id, run: task));
     return false;
   }
 
   /// Queues [action] if an entry with the same id is not already waiting.
-  void enqueue(SmartOfflineAction action) {
+  void enqueue(SmartConnectivityAction action) {
     if (_queue.any((item) => item.id == action.id)) return;
     _queue.add(action);
     notifyListeners();
@@ -138,7 +138,7 @@ class SmartOfflineController extends ChangeNotifier {
   /// Manually retries the queue (banner Retry).
   Future<void> retryNow() => flush();
 
-  /// Runs queued actions while online, up to [SmartOfflineConfig.maxRetries].
+  /// Runs queued actions while online, up to [SmartConnectivityConfig.maxRetries].
   Future<void> flush() async {
     if (_flushing || !isOnline) return;
     _flushing = true;
@@ -181,8 +181,9 @@ class SmartOfflineController extends ChangeNotifier {
     if (_statusOverride != null) return;
     final offline = results.isEmpty ||
         results.every((result) => result == ConnectivityResult.none);
-    final next =
-        offline ? SmartOfflineStatus.offline : SmartOfflineStatus.online;
+    final next = offline
+        ? SmartConnectivityStatus.offline
+        : SmartConnectivityStatus.online;
     if (next == _status) return;
     _status = next;
     notifyListeners();

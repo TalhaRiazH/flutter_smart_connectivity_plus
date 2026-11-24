@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 
 /// App-wide defaults for offline detection and UI.
 @immutable
-class SmartOfflineConfig {
+class SmartConnectivityConfig {
   /// Creates offline behavior settings.
-  const SmartOfflineConfig({
+  const SmartConnectivityConfig({
     this.showBanner = true,
     this.showDialog = false,
     this.showOfflineToast = false,
@@ -76,7 +76,7 @@ class SmartOfflineConfig {
   final String dialogConfirmLabel;
 
   /// Returns a copy with the given fields replaced.
-  SmartOfflineConfig copyWith({
+  SmartConnectivityConfig copyWith({
     bool? showBanner,
     bool? showDialog,
     bool? showOfflineToast,
@@ -95,7 +95,7 @@ class SmartOfflineConfig {
     String? dialogTitle,
     String? dialogConfirmLabel,
   }) {
-    return SmartOfflineConfig(
+    return SmartConnectivityConfig(
       showBanner: showBanner ?? this.showBanner,
       showDialog: showDialog ?? this.showDialog,
       showOfflineToast: showOfflineToast ?? this.showOfflineToast,
@@ -119,7 +119,7 @@ class SmartOfflineConfig {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is SmartOfflineConfig &&
+    return other is SmartConnectivityConfig &&
         other.showBanner == showBanner &&
         other.showDialog == showDialog &&
         other.showOfflineToast == showOfflineToast &&

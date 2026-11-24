@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'smart_offline.dart';
-import 'smart_offline_action.dart';
+import 'smart_connectivity.dart';
+import 'smart_connectivity_action.dart';
 
 /// A button that runs [onPressed] now when online, or queues it while offline.
 ///
 /// Uses [actionId] so the same action is not queued twice.
-class SmartOfflineSubmit extends StatelessWidget {
+class SmartConnectivitySubmit extends StatelessWidget {
   /// Creates a submit control bound to a stable [actionId].
-  const SmartOfflineSubmit({
+  const SmartConnectivitySubmit({
     super.key,
     required this.actionId,
     required this.onPressed,
@@ -20,7 +20,7 @@ class SmartOfflineSubmit extends StatelessWidget {
   final String actionId;
 
   /// Work to run when online (or later when the network returns).
-  final SmartOfflineTask onPressed;
+  final SmartConnectivityTask onPressed;
 
   /// Button label / content.
   final Widget child;
@@ -30,7 +30,7 @@ class SmartOfflineSubmit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = SmartOffline.maybeOf(context);
+    final controller = SmartConnectivity.maybeOf(context);
 
     return AnimatedBuilder(
       animation: controller ?? const _IdleListenable(),
@@ -42,7 +42,7 @@ class SmartOfflineSubmit extends StatelessWidget {
         return FilledButton(
           style: style,
           onPressed: () async {
-            final offlineController = SmartOffline.of(context);
+            final offlineController = SmartConnectivity.of(context);
             await offlineController.runOrEnqueue(actionId, onPressed);
           },
           child: Row(

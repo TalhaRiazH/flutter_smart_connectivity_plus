@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 
-import 'smart_offline_config.dart';
-import 'smart_offline_controller.dart';
-import 'smart_offline_status.dart';
+import 'smart_connectivity_config.dart';
+import 'smart_connectivity_controller.dart';
+import 'smart_connectivity_status.dart';
 
 /// Top banner shown while the app is offline or flaky.
-class SmartOfflineBanner extends StatelessWidget {
+class SmartConnectivityBanner extends StatelessWidget {
   /// Creates a banner bound to [controller].
-  const SmartOfflineBanner({
+  const SmartConnectivityBanner({
     super.key,
     required this.controller,
     required this.config,
   });
 
   /// Live offline state and queue.
-  final SmartOfflineController controller;
+  final SmartConnectivityController controller;
 
   /// Copy and retry settings.
-  final SmartOfflineConfig config;
+  final SmartConnectivityConfig config;
 
   @override
   Widget build(BuildContext context) {
-    if (!config.showBanner || controller.status == SmartOfflineStatus.online) {
+    if (!config.showBanner ||
+        controller.status == SmartConnectivityStatus.online) {
       return const SizedBox.shrink();
     }
 
-    final message = controller.status == SmartOfflineStatus.flaky
+    final message = controller.status == SmartConnectivityStatus.flaky
         ? config.flakyMessage
         : config.offlineMessage;
     final showRetry = config.showRetryButton && controller.queueLength > 0;
