@@ -135,7 +135,7 @@ Every parameter is optional.
 | `retryDelay` | `2s` | Wait between retries |
 | `offlineToastDuration` | `3s` | Offline toast lifetime |
 | `onlineToastDuration` | `2s` | Back-online toast lifetime |
-| `offlineMessage` | `You are offline` | Offline copy |
+| `offlineMessage` | `No internet connection` | Offline copy |
 | `flakyMessage` | `Connection is unstable` | Flaky copy |
 | `onlineMessage` | `Back online` | Back-online toast copy |
 | `retryLabel` | `Retry` | Retry button label |

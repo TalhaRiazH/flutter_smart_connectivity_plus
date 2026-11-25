@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// Top toast used for offline and back-online messages.
+/// Top strip used for offline and back-online messages.
+///
+/// Matches the layout of [SmartConnectivityBanner]: full-width bar under the
+/// status bar only — never a full-screen overlay.
 class SmartConnectivityToast extends StatelessWidget {
-  /// Creates a top toast.
+  /// Creates a top strip toast.
   const SmartConnectivityToast({
     super.key,
     required this.message,
@@ -14,10 +18,10 @@ class SmartConnectivityToast extends StatelessWidget {
   /// Toast text.
   final String message;
 
-  /// Toast background.
+  /// Strip background.
   final Color backgroundColor;
 
-  /// Toast text/icon color.
+  /// Text/icon color.
   final Color foregroundColor;
 
   /// Optional leading icon.
@@ -25,40 +29,53 @@ class SmartConnectivityToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            color: backgroundColor,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, color: foregroundColor, size: 18),
-                    const SizedBox(width: 8),
-                  ],
-                  Flexible(
-                    child: Text(
-                      message,
-                      style: TextStyle(
-                        color: foregroundColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: backgroundColor,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemStatusBarContrastEnforced: false,
+    );
+
+    final strip = AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Material(
+        color: backgroundColor,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: foregroundColor, size: 18),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    message,
+                    textAlign:
+                        icon == null ? TextAlign.center : TextAlign.start,
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
+    );
+
+    // Overlay entries expand to the full screen by default. Pin the strip to
+    // the top so it never paints a full-screen color block.
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        width: MediaQuery.sizeOf(context).width,
+        child: strip,
       ),
     );
   }

@@ -211,8 +211,6 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
             ) ??
             SmartConnectivityToast(
               message: message,
-              backgroundColor: const Color(0xFF7F1D1D),
-              icon: Icons.wifi_off_rounded,
             );
       },
     );
@@ -229,8 +227,7 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
             ) ??
             SmartConnectivityToast(
               message: widget.config.onlineMessage,
-              backgroundColor: const Color(0xFF065F46),
-              icon: Icons.wifi_rounded,
+              backgroundColor: const Color(0xFF22C55E),
             );
       },
     );

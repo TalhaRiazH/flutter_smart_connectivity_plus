@@ -16,7 +16,7 @@ class SmartConnectivityConfig {
     this.retryDelay = const Duration(seconds: 2),
     this.offlineToastDuration = const Duration(seconds: 3),
     this.onlineToastDuration = const Duration(seconds: 2),
-    this.offlineMessage = 'You are offline',
+    this.offlineMessage = 'No internet connection',
     this.flakyMessage = 'Connection is unstable',
     this.onlineMessage = 'Back online',
     this.retryLabel = 'Retry',

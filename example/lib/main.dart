@@ -10,8 +10,75 @@ Future<void> main() async {
   runApp(const OfflineDemoApp());
 }
 
-class OfflineDemoApp extends StatelessWidget {
+class OfflineDemoApp extends StatefulWidget {
   const OfflineDemoApp({super.key});
+
+  @override
+  State<OfflineDemoApp> createState() => _OfflineDemoAppState();
+}
+
+class _OfflineDemoAppState extends State<OfflineDemoApp> {
+  // Same widgets/copy as the published package — only toggle which surface shows.
+  SmartConnectivityConfig _config = const SmartConnectivityConfig(
+    showBanner: false,
+    showDialog: false,
+    showOfflineToast: false,
+    showOnlineToast: false,
+    offlineToastDuration: Duration(seconds: 4),
+    onlineToastDuration: Duration(seconds: 4),
+  );
+
+  SmartConnectivityConfig _previewConfig({
+    bool banner = false,
+    bool dialog = false,
+    bool offlineToast = false,
+    bool onlineToast = false,
+  }) {
+    return SmartConnectivityConfig(
+      showBanner: banner,
+      showDialog: dialog,
+      showOfflineToast: offlineToast,
+      showOnlineToast: onlineToast,
+      offlineToastDuration: const Duration(seconds: 4),
+      onlineToastDuration: const Duration(seconds: 4),
+    );
+  }
+
+  Future<void> _resetOnline() async {
+    demoController.debugOverrideStatus(SmartConnectivityStatus.online);
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+  }
+
+  Future<void> _previewOffline({
+    bool banner = false,
+    bool dialog = false,
+    bool toast = false,
+  }) async {
+    await _resetOnline();
+    final next = _previewConfig(
+      banner: banner,
+      dialog: dialog,
+      offlineToast: toast,
+    );
+    setState(() => _config = next);
+    demoController.updateConfig(next);
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    demoController.debugOverrideStatus(SmartConnectivityStatus.offline);
+  }
+
+  Future<void> _previewBackOnline() async {
+    await _resetOnline();
+    final next = _previewConfig(onlineToast: true);
+    setState(() => _config = next);
+    demoController.updateConfig(next);
+    demoController.debugOverrideStatus(SmartConnectivityStatus.offline);
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    demoController.debugOverrideStatus(SmartConnectivityStatus.online);
+  }
+
+  Future<void> _previewAllOffline() async {
+    await _previewOffline(banner: true, dialog: true, toast: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,22 +91,42 @@ class OfflineDemoApp extends StatelessWidget {
       ),
       builder: SmartConnectivityHost.materialBuilder(
         controller: demoController,
-        config: const SmartConnectivityConfig(
-          showBanner: true,
-          showDialog: true,
-          showOfflineToast: true,
-          showOnlineToast: true,
-          offlineMessage: 'You are offline. Actions will wait in the queue.',
-          onlineMessage: 'Back online',
-        ),
+        config: _config,
       ),
-      home: const HomeScreen(),
+      home: HomeScreen(
+        onPreviewOfflineBanner: () => _previewOffline(banner: true),
+        onPreviewOfflineDialog: () => _previewOffline(dialog: true),
+        onPreviewOfflineToast: () => _previewOffline(toast: true),
+        onPreviewAllOffline: _previewAllOffline,
+        onPreviewBackOnline: _previewBackOnline,
+        onResetOnline: () async {
+          await _resetOnline();
+          final next = _previewConfig();
+          setState(() => _config = next);
+          demoController.updateConfig(next);
+        },
+      ),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    required this.onPreviewOfflineBanner,
+    required this.onPreviewOfflineDialog,
+    required this.onPreviewOfflineToast,
+    required this.onPreviewAllOffline,
+    required this.onPreviewBackOnline,
+    required this.onResetOnline,
+  });
+
+  final Future<void> Function() onPreviewOfflineBanner;
+  final Future<void> Function() onPreviewOfflineDialog;
+  final Future<void> Function() onPreviewOfflineToast;
+  final Future<void> Function() onPreviewAllOffline;
+  final Future<void> Function() onPreviewBackOnline;
+  final Future<void> Function() onResetOnline;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -79,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final status = demoController.status.name;
     final queue = demoController.queueLength;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Smart Connectivity')),
@@ -87,32 +175,59 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             'Status: $status',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: theme.textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text('Queue: $queue action(s)'),
           const SizedBox(height: 8),
           Text(_lastResult),
-          const SizedBox(height: 24),
-          const Text(
-            'Works on every screen. Force offline, push another page, then '
-            'come back online — dialog/banner close and a top toast says '
-            'Back online.',
+          const SizedBox(height: 20),
+          Text('Preview UI', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            'Uses the real package defaults: banner/toast/dialog '
+            '“No internet connection”, online “Back online”.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Force offline'),
-            value: demoController.status == SmartConnectivityStatus.offline,
-            onChanged: (offline) {
-              demoController.debugOverrideStatus(
-                offline
-                    ? SmartConnectivityStatus.offline
-                    : SmartConnectivityStatus.online,
-              );
-            },
+          const SizedBox(height: 14),
+          FilledButton.tonal(
+            onPressed: widget.onPreviewOfflineBanner,
+            child: const Text('Offline banner'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
+          FilledButton.tonal(
+            onPressed: widget.onPreviewOfflineDialog,
+            child: const Text('Offline dialog'),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonal(
+            onPressed: widget.onPreviewOfflineToast,
+            child: const Text('Offline toast'),
+          ),
+          const SizedBox(height: 10),
+          FilledButton(
+            onPressed: widget.onPreviewAllOffline,
+            child: const Text('All offline UI'),
+          ),
+          const SizedBox(height: 10),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF22C55E),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: widget.onPreviewBackOnline,
+            child: const Text('Back online toast'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: widget.onResetOnline,
+            child: const Text('Reset to online'),
+          ),
+          const SizedBox(height: 28),
+          Text('Also try', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 10),
           FilledButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -150,8 +265,8 @@ class SecondScreen extends StatelessWidget {
       body: const Padding(
         padding: EdgeInsets.all(20),
         child: Text(
-          'Go offline from the previous screen or here — the host still '
-          'shows banner/dialog/toast on top of this route.',
+          'Trigger offline UI from the home screen, then open this route — '
+          'the host still shows banner/dialog/toast on top.',
         ),
       ),
     );

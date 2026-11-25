@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -132,8 +133,20 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('You are offline'), findsOneWidget);
+    expect(find.text('No internet connection'), findsOneWidget);
     expect(find.text('home'), findsOneWidget);
+
+    final overlay = tester
+        .widgetList<AnnotatedRegion<SystemUiOverlayStyle>>(
+          find.byType(AnnotatedRegion<SystemUiOverlayStyle>),
+        )
+        .map((region) => region.value)
+        .firstWhere(
+          (style) => style.statusBarIconBrightness == Brightness.light,
+          orElse: () => SystemUiOverlayStyle.dark,
+        );
+    expect(overlay.statusBarIconBrightness, Brightness.light);
+    expect(overlay.statusBarBrightness, Brightness.dark);
   });
 
   testWidgets('submit does not double-enqueue the same id', (tester) async {
@@ -173,7 +186,10 @@ void main() {
       MaterialApp(
         builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
-          config: const SmartConnectivityConfig(showDialog: true),
+          config: const SmartConnectivityConfig(
+            showBanner: false,
+            showDialog: true,
+          ),
         ),
         home: const Scaffold(body: Text('home')),
       ),
@@ -185,7 +201,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('No internet connection'), findsOneWidget);
-    expect(find.text('You are offline'), findsWidgets);
   });
 
   testWidgets('shows back-online toast and closes offline dialog',
@@ -199,6 +214,7 @@ void main() {
         builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
           config: const SmartConnectivityConfig(
+            showBanner: false,
             showDialog: true,
             showOnlineToast: true,
             onlineToastDuration: Duration(seconds: 5),
@@ -247,7 +263,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('my-banner'), findsOneWidget);
-    expect(find.text('You are offline'), findsNothing);
+    expect(find.text('No internet connection'), findsNothing);
   });
 
   testWidgets('SmartConnectivity.of returns the host controller',
