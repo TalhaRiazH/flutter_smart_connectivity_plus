@@ -5,16 +5,6 @@ import 'smart_connectivity_config.dart';
 import 'smart_connectivity_controller.dart';
 import 'smart_connectivity_status.dart';
 
-const Color _bannerColor = Color(0xFF111827);
-
-/// Light status-bar icons so clock / battery stay visible on the dark banner.
-const SystemUiOverlayStyle _bannerOverlayStyle = SystemUiOverlayStyle(
-  statusBarColor: _bannerColor,
-  statusBarIconBrightness: Brightness.light,
-  statusBarBrightness: Brightness.dark,
-  systemStatusBarContrastEnforced: false,
-);
-
 /// Top banner shown while the app is offline or flaky.
 class SmartConnectivityBanner extends StatelessWidget {
   /// Creates a banner bound to [controller].
@@ -41,11 +31,19 @@ class SmartConnectivityBanner extends StatelessWidget {
         ? config.flakyMessage
         : config.offlineMessage;
     final showRetry = config.showRetryButton && controller.queueLength > 0;
+    final background = config.bannerBackgroundColor;
+    final foreground = config.bannerForegroundColor;
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: background,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemStatusBarContrastEnforced: false,
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: _bannerOverlayStyle,
+      value: overlayStyle,
       child: Material(
-        color: _bannerColor,
+        color: background,
         child: SafeArea(
           bottom: false,
           child: Padding(
@@ -56,8 +54,8 @@ class SmartConnectivityBanner extends StatelessWidget {
                   child: Text(
                     message,
                     textAlign: showRetry ? TextAlign.start : TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFF9FAFB),
+                    style: TextStyle(
+                      color: foreground,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),

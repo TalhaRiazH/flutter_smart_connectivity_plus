@@ -12,6 +12,7 @@ class SmartConnectivityDialog extends StatelessWidget {
     required this.controller,
     required this.config,
     this.onDismiss,
+    this.onAction,
   });
 
   /// Live offline state and queue.
@@ -23,6 +24,9 @@ class SmartConnectivityDialog extends StatelessWidget {
   /// Called when the user closes the dialog.
   final VoidCallback? onDismiss;
 
+  /// Optional custom action from [SmartConnectivityHost.onDialogAction].
+  final VoidCallback? onAction;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -30,6 +34,9 @@ class SmartConnectivityDialog extends StatelessWidget {
         ? config.flakyMessage
         : config.offlineMessage;
     final showRetry = config.showRetryButton && controller.queueLength > 0;
+    final actionLabel = config.dialogActionLabel;
+    final showAction =
+        actionLabel != null && actionLabel.isNotEmpty && onAction != null;
     final isFlaky = controller.status == SmartConnectivityStatus.flaky;
 
     return Material(
@@ -108,13 +115,41 @@ class SmartConnectivityDialog extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
+                  if (showAction) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          onAction?.call();
+                          if (config.dismissDialogOnAction) {
+                            onDismiss?.call();
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: config.dialogActionBackgroundColor,
+                          foregroundColor: config.dialogActionForegroundColor,
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: Text(
+                          actionLabel,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: onDismiss,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEE2E2),
-                        foregroundColor: const Color(0xFFDC2626),
+                        backgroundColor: config.dialogConfirmBackgroundColor,
+                        foregroundColor: config.dialogConfirmForegroundColor,
                         elevation: 0,
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 14),

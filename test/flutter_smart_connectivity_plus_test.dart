@@ -4,9 +4,12 @@ import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('default config keeps banner and auto-retry on', () {
+  test('default config enables banner, dialog, and online toast only', () {
     const config = SmartConnectivityConfig();
     expect(config.showBanner, isTrue);
+    expect(config.showDialog, isTrue);
+    expect(config.showOnlineToast, isTrue);
+    expect(config.showOfflineToast, isFalse);
     expect(config.autoRetry, isTrue);
     expect(config.maxRetries, 3);
     expect(config, equals(const SmartConnectivityConfig()));
@@ -127,7 +130,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartConnectivityHost.materialBuilder(controller: controller),
+        builder: SmartConnectivityHost.materialBuilder(
+          controller: controller,
+          config: const SmartConnectivityConfig(showDialog: false),
+        ),
         home: const Scaffold(body: Text('home')),
       ),
     );
@@ -152,12 +158,21 @@ void main() {
   testWidgets('submit does not double-enqueue the same id', (tester) async {
     final controller = SmartConnectivityController(
       statusOverride: SmartConnectivityStatus.offline,
-      config: const SmartConnectivityConfig(autoRetry: false),
+      config: const SmartConnectivityConfig(
+        autoRetry: false,
+        showDialog: false,
+      ),
     );
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: SmartConnectivityHost.materialBuilder(controller: controller),
+        builder: SmartConnectivityHost.materialBuilder(
+          controller: controller,
+          config: const SmartConnectivityConfig(
+            autoRetry: false,
+            showDialog: false,
+          ),
+        ),
         home: Scaffold(
           body: SmartConnectivitySubmit(
             actionId: 'pay',
@@ -169,9 +184,9 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byType(FilledButton));
+    await tester.tap(find.text('Pay'));
     await tester.pump();
-    await tester.tap(find.byType(FilledButton));
+    await tester.tap(find.text('Pay'));
     await tester.pump();
 
     expect(controller.queueLength, 1);
@@ -200,6 +215,40 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('No internet connection'), findsOneWidget);
+  });
+
+  testWidgets('dialog custom action button runs onDialogAction',
+      (tester) async {
+    var tapped = false;
+    final controller = SmartConnectivityController(
+      statusOverride: SmartConnectivityStatus.online,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: SmartConnectivityHost.materialBuilder(
+          controller: controller,
+          config: const SmartConnectivityConfig(
+            showBanner: false,
+            showDialog: true,
+            dialogActionLabel: 'Open settings',
+          ),
+          onDialogAction: () => tapped = true,
+        ),
+        home: const Scaffold(body: Text('home')),
+      ),
+    );
+    await tester.pump();
+
+    controller.debugOverrideStatus(SmartConnectivityStatus.offline);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Open settings'), findsOneWidget);
+    await tester.tap(find.text('Open settings'));
+    await tester.pump();
+    expect(tapped, isTrue);
     expect(find.text('No internet connection'), findsOneWidget);
   });
 
@@ -247,6 +296,7 @@ void main() {
       MaterialApp(
         builder: SmartConnectivityHost.materialBuilder(
           controller: controller,
+          config: const SmartConnectivityConfig(showDialog: false),
           offlineBannerBuilder: (context, offlineController, config) {
             return const ColoredBox(
               color: Colors.orange,

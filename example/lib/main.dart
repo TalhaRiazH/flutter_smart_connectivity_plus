@@ -18,6 +18,9 @@ class OfflineDemoApp extends StatefulWidget {
 }
 
 class _OfflineDemoAppState extends State<OfflineDemoApp> {
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
   // Same widgets/copy as the published package — only toggle which surface shows.
   SmartConnectivityConfig _config = const SmartConnectivityConfig(
     showBanner: false,
@@ -27,6 +30,9 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
     offlineToastDuration: Duration(seconds: 4),
     onlineToastDuration: Duration(seconds: 4),
   );
+
+  /// Hides the demo chrome so dialog screenshots stay clean.
+  bool _hideDemoChrome = false;
 
   SmartConnectivityConfig _previewConfig({
     bool banner = false,
@@ -41,6 +47,7 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
       showOnlineToast: onlineToast,
       offlineToastDuration: const Duration(seconds: 4),
       onlineToastDuration: const Duration(seconds: 4),
+      dialogActionLabel: dialog ? 'Open settings' : null,
     );
   }
 
@@ -60,7 +67,11 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
       dialog: dialog,
       offlineToast: toast,
     );
-    setState(() => _config = next);
+    setState(() {
+      _config = next;
+      // Dialog-only: blank white page behind the card for screenshots.
+      _hideDemoChrome = dialog && !banner && !toast;
+    });
     demoController.updateConfig(next);
     await Future<void>.delayed(const Duration(milliseconds: 80));
     demoController.debugOverrideStatus(SmartConnectivityStatus.offline);
@@ -84,6 +95,7 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _messengerKey,
       title: 'flutter_smart_connectivity_plus',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7490)),
@@ -92,8 +104,14 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
       builder: SmartConnectivityHost.materialBuilder(
         controller: demoController,
         config: _config,
+        onDialogAction: () {
+          _messengerKey.currentState?.showSnackBar(
+            const SnackBar(content: Text('Custom dialog action tapped')),
+          );
+        },
       ),
       home: HomeScreen(
+        hideDemoChrome: _hideDemoChrome,
         onPreviewOfflineBanner: () => _previewOffline(banner: true),
         onPreviewOfflineDialog: () => _previewOffline(dialog: true),
         onPreviewOfflineToast: () => _previewOffline(toast: true),
@@ -102,7 +120,10 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
         onResetOnline: () async {
           await _resetOnline();
           final next = _previewConfig();
-          setState(() => _config = next);
+          setState(() {
+            _config = next;
+            _hideDemoChrome = false;
+          });
           demoController.updateConfig(next);
         },
       ),
@@ -113,6 +134,7 @@ class _OfflineDemoAppState extends State<OfflineDemoApp> {
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
+    required this.hideDemoChrome,
     required this.onPreviewOfflineBanner,
     required this.onPreviewOfflineDialog,
     required this.onPreviewOfflineToast,
@@ -121,6 +143,7 @@ class HomeScreen extends StatefulWidget {
     required this.onResetOnline,
   });
 
+  final bool hideDemoChrome;
   final Future<void> Function() onPreviewOfflineBanner;
   final Future<void> Function() onPreviewOfflineDialog;
   final Future<void> Function() onPreviewOfflineToast;
@@ -167,6 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final status = demoController.status.name;
     final queue = demoController.queueLength;
     final theme = Theme.of(context);
+
+    if (widget.hideDemoChrome) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: SizedBox.expand(),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Smart Connectivity')),

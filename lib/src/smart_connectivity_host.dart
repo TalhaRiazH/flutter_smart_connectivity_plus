@@ -27,6 +27,7 @@ class SmartConnectivityHost extends StatefulWidget {
     this.offlineDialogBuilder,
     this.offlineToastBuilder,
     this.onlineToastBuilder,
+    this.onDialogAction,
     required this.child,
   });
 
@@ -36,17 +37,25 @@ class SmartConnectivityHost extends StatefulWidget {
   /// Optional controller for tests and demos. Owned by the host when null.
   final SmartConnectivityController? controller;
 
-  /// Custom UI shown when internet is gone (banner). When null, [SmartConnectivityBanner] is used.
+  /// Fully custom offline banner. When null, [SmartConnectivityBanner] is used.
   final SmartConnectivityWidgetBuilder? offlineBannerBuilder;
 
-  /// Custom UI shown when internet is gone (dialog). When null, [SmartConnectivityDialog] is used.
-  final SmartConnectivityWidgetBuilder? offlineDialogBuilder;
+  /// Fully custom offline dialog. When null, [SmartConnectivityDialog] is used.
+  ///
+  /// Receives [onDismiss] / [onAction] so your widget can close the overlay or
+  /// run the same custom action as the default dialog button.
+  final SmartConnectivityDialogBuilder? offlineDialogBuilder;
 
-  /// Custom top toast while offline.
+  /// Fully custom offline toast. When null, [SmartConnectivityToast] is used.
   final SmartConnectivityWidgetBuilder? offlineToastBuilder;
 
-  /// Custom top toast when back online.
+  /// Fully custom back-online toast. When null, [SmartConnectivityToast] is used.
   final SmartConnectivityWidgetBuilder? onlineToastBuilder;
+
+  /// Runs when the user taps the optional dialog action button.
+  ///
+  /// Set [SmartConnectivityConfig.dialogActionLabel] to show the button.
+  final VoidCallback? onDialogAction;
 
   /// The rest of the app.
   final Widget child;
@@ -56,9 +65,10 @@ class SmartConnectivityHost extends StatefulWidget {
     SmartConnectivityConfig config = const SmartConnectivityConfig(),
     SmartConnectivityController? controller,
     SmartConnectivityWidgetBuilder? offlineBannerBuilder,
-    SmartConnectivityWidgetBuilder? offlineDialogBuilder,
+    SmartConnectivityDialogBuilder? offlineDialogBuilder,
     SmartConnectivityWidgetBuilder? offlineToastBuilder,
     SmartConnectivityWidgetBuilder? onlineToastBuilder,
+    VoidCallback? onDialogAction,
   }) {
     return (context, child) {
       return SmartConnectivityHost(
@@ -68,6 +78,7 @@ class SmartConnectivityHost extends StatefulWidget {
         offlineDialogBuilder: offlineDialogBuilder,
         offlineToastBuilder: offlineToastBuilder,
         onlineToastBuilder: onlineToastBuilder,
+        onDialogAction: onDialogAction,
         child: child ?? const SizedBox.shrink(),
       );
     };
@@ -172,11 +183,14 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
                   context,
                   _controller,
                   widget.config,
+                  _removeDialog,
+                  widget.onDialogAction,
                 ) ??
                 SmartConnectivityDialog(
                   controller: _controller,
                   config: widget.config,
                   onDismiss: _removeDialog,
+                  onAction: widget.onDialogAction,
                 );
             return Stack(
               children: [
@@ -211,6 +225,8 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
             ) ??
             SmartConnectivityToast(
               message: message,
+              backgroundColor: widget.config.offlineToastBackgroundColor,
+              foregroundColor: widget.config.offlineToastForegroundColor,
             );
       },
     );
@@ -227,7 +243,8 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
             ) ??
             SmartConnectivityToast(
               message: widget.config.onlineMessage,
-              backgroundColor: const Color(0xFF22C55E),
+              backgroundColor: widget.config.onlineToastBackgroundColor,
+              foregroundColor: widget.config.onlineToastForegroundColor,
             );
       },
     );

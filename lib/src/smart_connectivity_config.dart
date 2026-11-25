@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 /// App-wide defaults for offline detection and UI.
 @immutable
@@ -6,7 +7,7 @@ class SmartConnectivityConfig {
   /// Creates offline behavior settings.
   const SmartConnectivityConfig({
     this.showBanner = true,
-    this.showDialog = false,
+    this.showDialog = true,
     this.showOfflineToast = false,
     this.showOnlineToast = true,
     this.showRetryButton = true,
@@ -22,6 +23,18 @@ class SmartConnectivityConfig {
     this.retryLabel = 'Retry',
     this.dialogTitle = 'No internet connection',
     this.dialogConfirmLabel = 'OK',
+    this.dialogActionLabel,
+    this.dismissDialogOnAction = false,
+    this.bannerBackgroundColor = const Color(0xFF111827),
+    this.bannerForegroundColor = const Color(0xFFF9FAFB),
+    this.offlineToastBackgroundColor = const Color(0xFF111827),
+    this.offlineToastForegroundColor = const Color(0xFFF9FAFB),
+    this.onlineToastBackgroundColor = const Color(0xFF22C55E),
+    this.onlineToastForegroundColor = const Color(0xFFF9FAFB),
+    this.dialogConfirmBackgroundColor = const Color(0xFFFEE2E2),
+    this.dialogConfirmForegroundColor = const Color(0xFFDC2626),
+    this.dialogActionBackgroundColor = const Color(0xFFF3F4F6),
+    this.dialogActionForegroundColor = const Color(0xFF6B7280),
   }) : assert(maxRetries >= 0);
 
   /// Whether the host shows the persistent offline banner on every screen.
@@ -75,6 +88,48 @@ class SmartConnectivityConfig {
   /// Confirm button label on the default offline dialog.
   final String dialogConfirmLabel;
 
+  /// Optional extra button label on the default offline dialog.
+  ///
+  /// When set, pass [SmartConnectivityHost.onDialogAction] to run your own
+  /// task (open settings, navigate, log analytics, etc.).
+  final String? dialogActionLabel;
+
+  /// Whether tapping the custom dialog action closes the dialog.
+  ///
+  /// Defaults to `false` so the dialog stays up while the user finishes the
+  /// custom task.
+  final bool dismissDialogOnAction;
+
+  /// Offline banner background.
+  final Color bannerBackgroundColor;
+
+  /// Offline banner text / icon color.
+  final Color bannerForegroundColor;
+
+  /// Offline toast background.
+  final Color offlineToastBackgroundColor;
+
+  /// Offline toast text color.
+  final Color offlineToastForegroundColor;
+
+  /// Back-online toast background.
+  final Color onlineToastBackgroundColor;
+
+  /// Back-online toast text color.
+  final Color onlineToastForegroundColor;
+
+  /// Default dialog OK button background.
+  final Color dialogConfirmBackgroundColor;
+
+  /// Default dialog OK button text color.
+  final Color dialogConfirmForegroundColor;
+
+  /// Default dialog custom-action button background (lightest grey).
+  final Color dialogActionBackgroundColor;
+
+  /// Default dialog custom-action button text color.
+  final Color dialogActionForegroundColor;
+
   /// Returns a copy with the given fields replaced.
   SmartConnectivityConfig copyWith({
     bool? showBanner,
@@ -94,6 +149,19 @@ class SmartConnectivityConfig {
     String? retryLabel,
     String? dialogTitle,
     String? dialogConfirmLabel,
+    String? dialogActionLabel,
+    bool clearDialogActionLabel = false,
+    bool? dismissDialogOnAction,
+    Color? bannerBackgroundColor,
+    Color? bannerForegroundColor,
+    Color? offlineToastBackgroundColor,
+    Color? offlineToastForegroundColor,
+    Color? onlineToastBackgroundColor,
+    Color? onlineToastForegroundColor,
+    Color? dialogConfirmBackgroundColor,
+    Color? dialogConfirmForegroundColor,
+    Color? dialogActionBackgroundColor,
+    Color? dialogActionForegroundColor,
   }) {
     return SmartConnectivityConfig(
       showBanner: showBanner ?? this.showBanner,
@@ -113,6 +181,31 @@ class SmartConnectivityConfig {
       retryLabel: retryLabel ?? this.retryLabel,
       dialogTitle: dialogTitle ?? this.dialogTitle,
       dialogConfirmLabel: dialogConfirmLabel ?? this.dialogConfirmLabel,
+      dialogActionLabel: clearDialogActionLabel
+          ? null
+          : (dialogActionLabel ?? this.dialogActionLabel),
+      dismissDialogOnAction:
+          dismissDialogOnAction ?? this.dismissDialogOnAction,
+      bannerBackgroundColor:
+          bannerBackgroundColor ?? this.bannerBackgroundColor,
+      bannerForegroundColor:
+          bannerForegroundColor ?? this.bannerForegroundColor,
+      offlineToastBackgroundColor:
+          offlineToastBackgroundColor ?? this.offlineToastBackgroundColor,
+      offlineToastForegroundColor:
+          offlineToastForegroundColor ?? this.offlineToastForegroundColor,
+      onlineToastBackgroundColor:
+          onlineToastBackgroundColor ?? this.onlineToastBackgroundColor,
+      onlineToastForegroundColor:
+          onlineToastForegroundColor ?? this.onlineToastForegroundColor,
+      dialogConfirmBackgroundColor:
+          dialogConfirmBackgroundColor ?? this.dialogConfirmBackgroundColor,
+      dialogConfirmForegroundColor:
+          dialogConfirmForegroundColor ?? this.dialogConfirmForegroundColor,
+      dialogActionBackgroundColor:
+          dialogActionBackgroundColor ?? this.dialogActionBackgroundColor,
+      dialogActionForegroundColor:
+          dialogActionForegroundColor ?? this.dialogActionForegroundColor,
     );
   }
 
@@ -136,7 +229,19 @@ class SmartConnectivityConfig {
         other.onlineMessage == onlineMessage &&
         other.retryLabel == retryLabel &&
         other.dialogTitle == dialogTitle &&
-        other.dialogConfirmLabel == dialogConfirmLabel;
+        other.dialogConfirmLabel == dialogConfirmLabel &&
+        other.dialogActionLabel == dialogActionLabel &&
+        other.dismissDialogOnAction == dismissDialogOnAction &&
+        other.bannerBackgroundColor == bannerBackgroundColor &&
+        other.bannerForegroundColor == bannerForegroundColor &&
+        other.offlineToastBackgroundColor == offlineToastBackgroundColor &&
+        other.offlineToastForegroundColor == offlineToastForegroundColor &&
+        other.onlineToastBackgroundColor == onlineToastBackgroundColor &&
+        other.onlineToastForegroundColor == onlineToastForegroundColor &&
+        other.dialogConfirmBackgroundColor == dialogConfirmBackgroundColor &&
+        other.dialogConfirmForegroundColor == dialogConfirmForegroundColor &&
+        other.dialogActionBackgroundColor == dialogActionBackgroundColor &&
+        other.dialogActionForegroundColor == dialogActionForegroundColor;
   }
 
   @override
@@ -158,5 +263,17 @@ class SmartConnectivityConfig {
         retryLabel,
         dialogTitle,
         dialogConfirmLabel,
+        dialogActionLabel,
+        dismissDialogOnAction,
+        bannerBackgroundColor,
+        bannerForegroundColor,
+        offlineToastBackgroundColor,
+        offlineToastForegroundColor,
+        onlineToastBackgroundColor,
+        onlineToastForegroundColor,
+        dialogConfirmBackgroundColor,
+        dialogConfirmForegroundColor,
+        dialogActionBackgroundColor,
+        dialogActionForegroundColor,
       ]);
 }

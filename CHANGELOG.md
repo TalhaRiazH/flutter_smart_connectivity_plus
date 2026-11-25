@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.3
+
+* Default UI: offline banner, dialog, and back-online strip on; offline toast off.
+* Optional dialog action button (`dialogActionLabel` + `onDialogAction`), lightest grey by default.
+* Config colors for banner, toasts, and dialog buttons.
+* Full replace via `offlineBannerBuilder`, `offlineDialogBuilder`, `offlineToastBuilder`, `onlineToastBuilder`.
+* README demo GIF plus offline / dialog / back-online screenshots.
+
 ## 0.1.2
 
 * Default offline copy is now `No internet connection`.
