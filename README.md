@@ -12,6 +12,10 @@ Banner, dialog, and toast when the network drops — then a green **Back online*
 
 ![Offline banner. Dark strip with No internet connection.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_offline_banner.png)
 
+**Offline dialog.** Card with optional custom action (light grey) and OK.
+
+![Offline dialog. No internet connection with Open settings and OK.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_offline_dialog.png)
+
 **Back online.** Bright green top strip when the network returns.
 
 ![Back online. Bright green strip with Back online.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_back_online.png)
