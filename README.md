@@ -20,13 +20,13 @@ Banner, dialog, and toast when the network drops — then a green **Back online*
 
 ![Back online. Bright green strip with Back online.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_back_online.png)
 
-Other packages tell you if the phone is online. This one handles the product flow: detect offline, show a clear banner, queue actions, and retry safely when the network returns — without running the same action twice.
+`flutter_smart_connectivity_plus` handles the full offline product flow: detect connection loss, show a clear banner / dialog / toast, queue actions by id, and retry safely when the network returns — without running the same action twice.
 
 ## What problem does this solve?
 
 The phone goes offline. A sync or payment fails. The user taps again. You get random errors, double submits, or silent loss of work.
 
-`flutter_smart_connectivity_plus` is meant to own that flow with one host for the whole app.
+This package owns that flow with one host for the whole app.
 
 | The phone is… | What happens |
 | --- | --- |

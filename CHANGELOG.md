@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.4
+
+* Clarify the README to describe the package on its own, without comparing to others.
+
 ## 0.1.3
 
 * Default UI: offline banner, dialog, and back-online strip on; offline toast off.
