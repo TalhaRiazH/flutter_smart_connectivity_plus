@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.1
+
+* Add LinkedIn profile link under the author name in the README.
+
 ## 0.1.0
 
 * Add `SmartConnectivityHost` for app-wide offline detection and banner UI.

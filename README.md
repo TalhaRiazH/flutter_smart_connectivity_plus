@@ -177,7 +177,8 @@ See the `example/` folder: force offline, queue a sync, then come back online an
 
 ## Author
 
-Talha Riaz
+Talha Riaz  
+[LinkedIn](https://www.linkedin.com/in/talha-riaz-7a21a8219/)
 
 ## License
 
