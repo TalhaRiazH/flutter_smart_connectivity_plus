@@ -1,6 +1,6 @@
 name: flutter_smart_connectivity_plus
 description: Offline and flaky-network handling for Flutter. Detect connection loss, show a clear UI, queue actions, and retry safely when the network returns.
-version: 0.1.6
+version: 0.1.7
 homepage: https://github.com/TalhaRiazH/flutter_smart_connectivity_plus
 repository: https://github.com/TalhaRiazH/flutter_smart_connectivity_plus
 issue_tracker: https://github.com/TalhaRiazH/flutter_smart_connectivity_plus/issues
@@ -21,13 +21,14 @@ platforms:
   linux:
 
 environment:
-  sdk: ^3.5.0
-  flutter: ">=3.24.0"
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  connectivity_plus: ^6.1.4
+  connectivity_plus: ^7.3.2
+  material_ui: ^1.2.0
 
 dev_dependencies:
   flutter_test:

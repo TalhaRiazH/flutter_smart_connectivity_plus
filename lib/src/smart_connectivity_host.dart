@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'smart_connectivity_banner.dart';
 import 'smart_connectivity_config.dart';
@@ -308,7 +308,7 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
       config: widget.config,
       child: Column(
         children: [
-          if (banner != null) banner,
+          ?banner,
           Expanded(child: widget.child),
         ],
       ),
@@ -334,7 +334,7 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
     return Overlay(
       key: _overlayKey,
       initialEntries: [
-        if (_appEntry != null) _appEntry!,
+        ?_appEntry,
       ],
     );
   }

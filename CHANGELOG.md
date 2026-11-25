@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.7
+
+* Migrate UI imports to `material_ui` (Flutter 3.44+) and bump `connectivity_plus` to ^7.3.2 for full pub points.
+
 ## 0.1.6
 
 * Add a clear “setup complete” note after Step 2 and a “What more can be done” section for optional features.

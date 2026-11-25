@@ -43,7 +43,7 @@ flutter pub add flutter_smart_connectivity_plus
 **Step 2 — Turn it on in `main.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.dart';
 
 void main() {

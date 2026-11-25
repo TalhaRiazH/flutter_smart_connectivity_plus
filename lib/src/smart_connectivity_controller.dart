@@ -17,7 +17,7 @@ class SmartConnectivityController extends ChangeNotifier {
     SmartConnectivityConfig config = const SmartConnectivityConfig(),
     Connectivity? connectivity,
     SmartConnectivityStatus? statusOverride,
-  })  : _config = config,
+  })  : _config = config, // ignore: prefer_initializing_formals
         _connectivity = connectivity ?? Connectivity(),
         _statusOverride = statusOverride,
         _status = statusOverride ?? SmartConnectivityStatus.online;
