@@ -2,6 +2,14 @@
 
 Offline and flaky-network handling for Flutter.
 
+**Offline.** Dark top banner with light status-bar icons — `No internet connection`.
+
+![Offline banner. Dark strip with No internet connection.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_offline_banner.png)
+
+**Back online.** Bright green top strip when the network returns.
+
+![Back online. Bright green strip with Back online.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_back_online.png)
+
 Other packages tell you if the phone is online. This one handles the product flow: detect offline, show a clear banner, queue actions, and retry safely when the network returns — without running the same action twice.
 
 ## What problem does this solve?
