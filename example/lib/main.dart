@@ -3,10 +3,18 @@ import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.
 
 final SmartConnectivityController demoController = SmartConnectivityController(
   statusOverride: SmartConnectivityStatus.online,
+  queueStore: const SharedPreferencesQueueStore(),
 );
+
+int durableSyncCount = 0;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  demoController.registerHandler('sync-profile', (request) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    if (!demoController.isOnline) throw StateError('Still offline');
+    durableSyncCount += 1;
+  });
   runApp(const OfflineDemoApp());
 }
 
@@ -203,14 +211,13 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         children: [
-          Text(
-            'Status: $status',
-            style: theme.textTheme.titleLarge,
-          ),
+          Text('Status: $status', style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Text('Queue: $queue action(s)'),
           const SizedBox(height: 8),
           Text(_lastResult),
+          const SizedBox(height: 8),
+          Text('Durable syncs completed: $durableSyncCount'),
           const SizedBox(height: 20),
           Text('Preview UI', style: theme.textTheme.titleMedium),
           const SizedBox(height: 6),
@@ -261,9 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
           FilledButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SecondScreen(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const SecondScreen()),
               );
             },
             child: const Text('Open another screen'),
@@ -273,6 +278,15 @@ class _HomeScreenState extends State<HomeScreen> {
             actionId: 'sync-profile',
             onPressed: _fakeSync,
             child: const Text('Sync profile'),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonal(
+            onPressed: () => demoController.runOrEnqueueDurable(
+              id: 'sync-profile-demo',
+              type: 'sync-profile',
+              payload: {'userId': 'demo'},
+            ),
+            child: const Text('Durable sync (survives restart)'),
           ),
           const SizedBox(height: 12),
           OutlinedButton(

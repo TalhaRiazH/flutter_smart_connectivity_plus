@@ -22,12 +22,8 @@ void main() {
     );
     await controller.start();
 
-    controller.enqueue(
-      SmartConnectivityAction(id: 'sync', run: () async {}),
-    );
-    controller.enqueue(
-      SmartConnectivityAction(id: 'sync', run: () async {}),
-    );
+    controller.enqueue(SmartConnectivityAction(id: 'sync', run: () async {}));
+    controller.enqueue(SmartConnectivityAction(id: 'sync', run: () async {}));
 
     expect(controller.queueLength, 1);
     controller.dispose();
@@ -218,8 +214,9 @@ void main() {
     expect(find.text('No internet connection'), findsOneWidget);
   });
 
-  testWidgets('dialog custom action button runs onDialogAction',
-      (tester) async {
+  testWidgets('dialog custom action button runs onDialogAction', (
+    tester,
+  ) async {
     var tapped = false;
     final controller = SmartConnectivityController(
       statusOverride: SmartConnectivityStatus.online,
@@ -252,8 +249,9 @@ void main() {
     expect(find.text('No internet connection'), findsOneWidget);
   });
 
-  testWidgets('shows back-online toast and closes offline dialog',
-      (tester) async {
+  testWidgets('shows back-online toast and closes offline dialog', (
+    tester,
+  ) async {
     final controller = SmartConnectivityController(
       statusOverride: SmartConnectivityStatus.online,
     );
@@ -316,8 +314,9 @@ void main() {
     expect(find.text('No internet connection'), findsNothing);
   });
 
-  testWidgets('SmartConnectivity.of returns the host controller',
-      (tester) async {
+  testWidgets('SmartConnectivity.of returns the host controller', (
+    tester,
+  ) async {
     final controller = SmartConnectivityController(
       statusOverride: SmartConnectivityStatus.online,
     );
@@ -335,5 +334,216 @@ void main() {
     await tester.pump();
 
     expect(find.text('up'), findsOneWidget);
+  });
+
+  group('durable queue', () {
+    const noDelay = SmartConnectivityConfig(retryDelay: Duration.zero);
+
+    test(
+      'survives a restart and runs after the handler is registered',
+      () async {
+        final store = MemorySmartConnectivityQueueStore();
+        final first = SmartConnectivityController(
+          statusOverride: SmartConnectivityStatus.offline,
+          queueStore: store,
+          config: noDelay,
+        );
+        await first.start();
+        first.enqueueDurable(
+          id: 'order-1',
+          type: 'checkout',
+          payload: {'cartId': 'c1'},
+        );
+        await Future<void>.delayed(Duration.zero);
+        first.dispose();
+
+        final requests = <SmartConnectivityRequest>[];
+        final second = SmartConnectivityController(
+          statusOverride: SmartConnectivityStatus.online,
+          queueStore: store,
+          config: noDelay,
+        );
+        await second.start();
+        expect(second.queueLength, 1);
+
+        second.registerHandler('checkout', (request) async {
+          requests.add(request);
+        });
+        await pumpEventQueue();
+
+        expect(requests, hasLength(1));
+        expect(requests.single.payload, {'cartId': 'c1'});
+        expect(requests.single.isReplay, isTrue);
+        expect(second.queueLength, 0);
+        expect(await store.load(), isEmpty);
+        second.dispose();
+      },
+    );
+
+    test('replays an in-flight action with the same idempotency key', () async {
+      final store = MemorySmartConnectivityQueueStore();
+      await store.save([
+        SmartConnectivityAction(
+          id: 'pay-1',
+          type: 'pay',
+          idempotencyKey: 'key-123',
+          inFlight: true,
+        ).toJson(),
+      ]);
+
+      final keys = <String>[];
+      final replays = <bool>[];
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.online,
+        queueStore: store,
+        config: noDelay,
+      );
+      controller.registerHandler('pay', (request) async {
+        keys.add(request.idempotencyKey);
+        replays.add(request.isReplay);
+      });
+      await controller.start();
+      await pumpEventQueue();
+
+      expect(keys, ['key-123']);
+      expect(replays, [isTrue]);
+      controller.dispose();
+    });
+
+    test('beforeFlush returning false keeps the queue untouched', () async {
+      var ran = 0;
+      var gateCalls = 0;
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.offline,
+        config: noDelay,
+        beforeFlush: () async {
+          gateCalls += 1;
+          return false;
+        },
+      );
+      controller.registerHandler('sync', (_) async => ran += 1);
+      await controller.start();
+      controller.enqueueDurable(id: 'sync-1', type: 'sync');
+
+      controller.debugOverrideStatus(SmartConnectivityStatus.online);
+      await pumpEventQueue();
+
+      expect(gateCalls, greaterThan(0));
+      expect(ran, 0);
+      expect(controller.queueLength, 1);
+      controller.dispose();
+    });
+
+    test(
+      'auth exception keeps the action and does not count an attempt',
+      () async {
+        var authExpired = 0;
+        var calls = 0;
+        final controller = SmartConnectivityController(
+          statusOverride: SmartConnectivityStatus.offline,
+          config: noDelay,
+          onAuthExpired: () => authExpired += 1,
+        );
+        controller.registerHandler('sync', (_) async {
+          calls += 1;
+          throw const SmartConnectivityAuthException('token expired');
+        });
+        await controller.start();
+        controller.enqueueDurable(id: 'sync-1', type: 'sync');
+
+        controller.debugOverrideStatus(SmartConnectivityStatus.online);
+        await pumpEventQueue();
+
+        expect(calls, 1);
+        expect(authExpired, 1);
+        expect(controller.queueLength, 1);
+        expect(controller.queue.single.attempts, 0);
+        controller.dispose();
+      },
+    );
+
+    test('unknown type waits until its handler is registered', () async {
+      var ran = 0;
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.online,
+        config: noDelay,
+      );
+      await controller.start();
+      controller.enqueueDurable(id: 'upload-1', type: 'upload');
+      await pumpEventQueue();
+      expect(controller.queueLength, 1);
+
+      controller.registerHandler('upload', (_) async => ran += 1);
+      await pumpEventQueue();
+
+      expect(ran, 1);
+      expect(controller.queueLength, 0);
+      controller.dispose();
+    });
+
+    test('drops after maxRetries and reports it', () async {
+      final dropped = <String>[];
+      final store = MemorySmartConnectivityQueueStore();
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.offline,
+        queueStore: store,
+        config: const SmartConnectivityConfig(
+          maxRetries: 1,
+          retryDelay: Duration.zero,
+        ),
+        onActionDropped: (action, _) => dropped.add(action.id),
+      );
+      controller.registerHandler('sync', (_) async => throw StateError('500'));
+      await controller.start();
+      controller.enqueueDurable(id: 'sync-1', type: 'sync');
+
+      controller.debugOverrideStatus(SmartConnectivityStatus.online);
+      await pumpEventQueue();
+
+      expect(dropped, ['sync-1']);
+      expect(controller.queueLength, 0);
+      expect(await store.load(), isEmpty);
+      controller.dispose();
+    });
+
+    test('runOrEnqueueDurable runs now when online', () async {
+      final keys = <String>[];
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.online,
+        config: noDelay,
+      );
+      controller.registerHandler('sync', (request) async {
+        keys.add(request.idempotencyKey);
+      });
+      await controller.start();
+
+      final ran = await controller.runOrEnqueueDurable(
+        id: 'sync-1',
+        type: 'sync',
+        idempotencyKey: 'abc',
+      );
+
+      expect(ran, isTrue);
+      expect(keys, ['abc']);
+      expect(controller.queueLength, 0);
+      controller.dispose();
+    });
+
+    test('session actions are never written to the store', () async {
+      final store = MemorySmartConnectivityQueueStore();
+      final controller = SmartConnectivityController(
+        statusOverride: SmartConnectivityStatus.offline,
+        queueStore: store,
+        config: noDelay,
+      );
+      await controller.start();
+      await controller.runOrEnqueue('session', () async {});
+      controller.enqueueDurable(id: 'durable', type: 'sync');
+      await pumpEventQueue();
+
+      final saved = await store.load();
+      expect(saved.map((e) => e['id']), ['durable']);
+      controller.dispose();
+    });
   });
 }

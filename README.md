@@ -20,7 +20,7 @@ Banner, dialog, and toast when the network drops — then a green **Back online*
 
 ![Back online. Bright green strip with Back online.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_back_online.png)
 
-`flutter_smart_connectivity_plus` handles the full offline product flow: detect connection loss, show a clear banner / dialog / toast, queue actions by id, and retry safely when the network returns — without running the same action twice.
+`flutter_smart_connectivity_plus` handles the full offline product flow: detect connection loss, show a clear banner / dialog / toast, queue actions by id (in memory or saved across restarts), and replay them when the network returns with a stable idempotency key for your server.
 
 ## What problem does this solve?
 
@@ -33,6 +33,8 @@ This package owns that flow with one host for the whole app.
 | Offline | Banner shows. New work can wait in a queue. |
 | Back online | Queued work retries automatically. |
 | Same action tapped twice | One queue entry — same id is not duplicated. |
+| App is closed and reopened | Durable actions are restored and replayed. |
+| Login expired on replay | Replay pauses; you refresh the session and retry. |
 
 **Step 1 — Add the package**
 
@@ -67,7 +69,7 @@ That completes setup. Offline handling is now active across your app.
 
 ## What more can be done
 
-The steps above are enough for most apps. Use the sections below when you need queuing, a submit button, or custom offline UI.
+The steps above are enough for most apps. Use the sections below when you need queuing, a queue that survives restart, session refresh on replay, a submit button, or custom offline UI.
 
 ## Queue work from any screen
 
@@ -80,6 +82,76 @@ await offline.runOrEnqueue('sync-profile', () async {
 ```
 
 If the device is online, the task runs now. If not, it waits in the queue and runs when the network returns.
+
+This queue lives in memory for the current session. For work that must survive an app restart, use the durable queue below.
+
+## Queue that survives restart
+
+A closure such as `() => api.checkout()` cannot be saved to disk. Durable work is saved as a **type + payload**, and you register one handler per type at app start.
+
+```dart
+final controller = SmartConnectivityController(
+  queueStore: const SharedPreferencesQueueStore(),
+);
+
+controller.registerHandler('sync-profile', (request) async {
+  await api.syncProfile(request.payload['userId'] as String);
+});
+
+MaterialApp(
+  builder: SmartConnectivityHost.materialBuilder(controller: controller),
+  home: const HomeScreen(),
+);
+```
+
+Queue work from any screen:
+
+```dart
+await SmartConnectivity.of(context).runOrEnqueueDurable(
+  id: 'sync-profile-42',
+  type: 'sync-profile',
+  payload: {'userId': '42'},
+);
+```
+
+If the app is killed while offline, the action is restored on the next launch and runs when its handler is registered and the network is back. Use your own storage (SQLite, Hive, secure storage) by implementing `SmartConnectivityQueueStore`.
+
+## Expired login on replay
+
+Queued work can replay hours later, after the session has expired. Refresh it before the queue runs, and tell the package when a request is rejected:
+
+```dart
+final controller = SmartConnectivityController(
+  queueStore: const SharedPreferencesQueueStore(),
+  beforeFlush: () async => auth.refreshIfNeeded(), // return false to pause
+  onAuthExpired: () => navigatorKey.currentState?.pushNamed('/login'),
+);
+
+controller.registerHandler('sync-profile', (request) async {
+  final response = await api.syncProfile(request.payload);
+  if (response.statusCode == 401) {
+    throw const SmartConnectivityAuthException();
+  }
+});
+```
+
+On `SmartConnectivityAuthException` the replay stops, the action stays queued, and no retry attempt is counted. After the user signs in again, call `controller.retryNow()`.
+
+## Avoid double charges on the server
+
+The queue id stops the same action from being queued twice on the device. It cannot know whether a request already reached your server before the connection dropped. For that, every durable request carries a stable `idempotencyKey` (defaults to the id):
+
+```dart
+controller.registerHandler('checkout', (request) async {
+  await http.post(
+    checkoutUri,
+    headers: {'Idempotency-Key': request.idempotencyKey},
+    body: jsonEncode(request.payload),
+  );
+});
+```
+
+Your server stores that key and returns the earlier result when it sees it again. `request.isReplay` is `true` when the action was restored after a restart or a previous attempt may already have reached the server.
 
 ## Submit button that respects offline
 

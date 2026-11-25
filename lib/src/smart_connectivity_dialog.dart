@@ -74,7 +74,7 @@ class SmartConnectivityDialog extends StatelessWidget {
                     child: Icon(
                       isFlaky
                           ? Icons
-                              .signal_wifi_statusbar_connected_no_internet_4_rounded
+                                .signal_wifi_statusbar_connected_no_internet_4_rounded
                           : Icons.wifi_off_rounded,
                       size: 30,
                       color: isFlaky

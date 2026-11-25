@@ -53,8 +53,9 @@ class SmartConnectivityToast extends StatelessWidget {
                 Expanded(
                   child: Text(
                     message,
-                    textAlign:
-                        icon == null ? TextAlign.center : TextAlign.start,
+                    textAlign: icon == null
+                        ? TextAlign.center
+                        : TextAlign.start,
                     style: TextStyle(
                       color: foregroundColor,
                       fontSize: 13,
@@ -73,10 +74,7 @@ class SmartConnectivityToast extends StatelessWidget {
     // the top so it never paints a full-screen color block.
     return Align(
       alignment: Alignment.topCenter,
-      child: SizedBox(
-        width: MediaQuery.sizeOf(context).width,
-        child: strip,
-      ),
+      child: SizedBox(width: MediaQuery.sizeOf(context).width, child: strip),
     );
   }
 }

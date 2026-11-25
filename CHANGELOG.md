@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.0
+
+* Add a durable queue that survives app restart: `registerHandler`, `enqueueDurable`, `runOrEnqueueDurable`, and `SmartConnectivityQueueStore` with `SharedPreferencesQueueStore`.
+* Add `beforeFlush` to refresh an expired session before replay, and `SmartConnectivityAuthException` + `onAuthExpired` to pause replay without losing the action.
+* Pass a stable `idempotencyKey` and `isReplay` to every durable handler so servers can ignore duplicates.
+* Add `onActionDropped` when an action exceeds `maxRetries`.
+* Document session vs durable queue behavior in the README.
+
 ## 0.1.7
 
 * Migrate UI imports to `material_ui` (Flutter 3.44+) and bump `connectivity_plus` to ^7.3.2 for full pub points.

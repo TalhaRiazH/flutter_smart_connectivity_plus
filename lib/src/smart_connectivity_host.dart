@@ -6,6 +6,7 @@ import 'smart_connectivity_banner.dart';
 import 'smart_connectivity_config.dart';
 import 'smart_connectivity_controller.dart';
 import 'smart_connectivity_dialog.dart';
+import 'smart_connectivity_queue_store.dart';
 import 'smart_connectivity_scope.dart';
 import 'smart_connectivity_status.dart';
 import 'smart_connectivity_toast.dart';
@@ -28,6 +29,10 @@ class SmartConnectivityHost extends StatefulWidget {
     this.offlineToastBuilder,
     this.onlineToastBuilder,
     this.onDialogAction,
+    this.queueStore,
+    this.beforeFlush,
+    this.onAuthExpired,
+    this.onActionDropped,
     required this.child,
   });
 
@@ -57,6 +62,22 @@ class SmartConnectivityHost extends StatefulWidget {
   /// Set [SmartConnectivityConfig.dialogActionLabel] to show the button.
   final VoidCallback? onDialogAction;
 
+  /// Where durable actions are saved. Use [SharedPreferencesQueueStore] so
+  /// they survive an app restart. Ignored when [controller] is passed.
+  final SmartConnectivityQueueStore? queueStore;
+
+  /// Runs once before each queue replay, for example to refresh an expired
+  /// session. Return `false` to pause. Ignored when [controller] is passed.
+  final SmartConnectivityBeforeFlush? beforeFlush;
+
+  /// Runs when a handler throws [SmartConnectivityAuthException].
+  /// Ignored when [controller] is passed.
+  final VoidCallback? onAuthExpired;
+
+  /// Runs when an action is dropped after too many failures.
+  /// Ignored when [controller] is passed.
+  final SmartConnectivityActionDropped? onActionDropped;
+
   /// The rest of the app.
   final Widget child;
 
@@ -69,6 +90,10 @@ class SmartConnectivityHost extends StatefulWidget {
     SmartConnectivityWidgetBuilder? offlineToastBuilder,
     SmartConnectivityWidgetBuilder? onlineToastBuilder,
     VoidCallback? onDialogAction,
+    SmartConnectivityQueueStore? queueStore,
+    SmartConnectivityBeforeFlush? beforeFlush,
+    VoidCallback? onAuthExpired,
+    SmartConnectivityActionDropped? onActionDropped,
   }) {
     return (context, child) {
       return SmartConnectivityHost(
@@ -79,6 +104,10 @@ class SmartConnectivityHost extends StatefulWidget {
         offlineToastBuilder: offlineToastBuilder,
         onlineToastBuilder: onlineToastBuilder,
         onDialogAction: onDialogAction,
+        queueStore: queueStore,
+        beforeFlush: beforeFlush,
+        onAuthExpired: onAuthExpired,
+        onActionDropped: onActionDropped,
         child: child ?? const SizedBox.shrink(),
       );
     };
@@ -104,7 +133,14 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
     super.initState();
     _ownsController = widget.controller == null;
     _controller =
-        widget.controller ?? SmartConnectivityController(config: widget.config);
+        widget.controller ??
+        SmartConnectivityController(
+          config: widget.config,
+          queueStore: widget.queueStore,
+          beforeFlush: widget.beforeFlush,
+          onAuthExpired: widget.onAuthExpired,
+          onActionDropped: widget.onActionDropped,
+        );
     _controller.updateConfig(widget.config);
     _hadOffline = _controller.status != SmartConnectivityStatus.online;
     _controller.addListener(_onChange);
@@ -179,7 +215,8 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
             if (_controller.status == SmartConnectivityStatus.online) {
               return const SizedBox.shrink();
             }
-            final dialog = builder?.call(
+            final dialog =
+                builder?.call(
                   context,
                   _controller,
                   widget.config,
@@ -196,8 +233,9 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
               children: [
                 Positioned.fill(
                   child: GestureDetector(
-                    onTap:
-                        widget.config.barrierDismissible ? _removeDialog : null,
+                    onTap: widget.config.barrierDismissible
+                        ? _removeDialog
+                        : null,
                     child: const ColoredBox(color: Color(0x80000000)),
                   ),
                 ),
@@ -287,12 +325,14 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
   }
 
   Widget _buildAppLayer(BuildContext context) {
-    final showBanner = widget.config.showBanner &&
+    final showBanner =
+        widget.config.showBanner &&
         _controller.status != SmartConnectivityStatus.online;
 
     Widget? banner;
     if (showBanner) {
-      banner = widget.offlineBannerBuilder?.call(
+      banner =
+          widget.offlineBannerBuilder?.call(
             context,
             _controller,
             widget.config,
@@ -331,11 +371,6 @@ class _SmartConnectivityHostState extends State<SmartConnectivityHost> {
 
   @override
   Widget build(BuildContext context) {
-    return Overlay(
-      key: _overlayKey,
-      initialEntries: [
-        ?_appEntry,
-      ],
-    );
+    return Overlay(key: _overlayKey, initialEntries: [?_appEntry]);
   }
 }
