@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.6
+
+* Add a clear “setup complete” note after Step 2 and a “What more can be done” section for optional features.
+
 ## 0.1.5
 
 * Flatten setup steps in the README so Step 1 / Step 2 are not TOC headings.

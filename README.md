@@ -63,6 +63,12 @@ class MyApp extends StatelessWidget {
 }
 ```
 
+That completes setup. Offline handling is now active across your app.
+
+## What more can be done
+
+The steps above are enough for most apps. Use the sections below when you need queuing, a submit button, or custom offline UI.
+
 ## Queue work from any screen
 
 ```dart
