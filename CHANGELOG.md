@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.5
+
+* Flatten setup steps in the README so Step 1 / Step 2 are not TOC headings.
+
 ## 0.1.4
 
 * Clarify the README to describe the package on its own, without comparing to others.

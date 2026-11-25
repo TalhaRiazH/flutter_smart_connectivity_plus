@@ -34,15 +34,13 @@ This package owns that flow with one host for the whole app.
 | Back online | Queued work retries automatically. |
 | Same action tapped twice | One queue entry — same id is not duplicated. |
 
-## Setup in 2 steps
-
-### Step 1 — Add the package
+**Step 1 — Add the package**
 
 ```bash
 flutter pub add flutter_smart_connectivity_plus
 ```
 
-### Step 2 — Turn it on in `main.dart`
+**Step 2 — Turn it on in `main.dart`**
 
 ```dart
 import 'package:flutter/material.dart';
