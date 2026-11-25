@@ -2,6 +2,12 @@
 
 Offline and flaky-network handling for Flutter.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_demo.gif" alt="Offline banner, dialog, toast, and back online demo" width="320" />
+</p>
+
+Banner, dialog, and toast when the network drops — then a green **Back online** strip when it returns. GIFs loop automatically on GitHub and pub.dev.
+
 **Offline.** Dark top banner with light status-bar icons — `No internet connection`.
 
 ![Offline banner. Dark strip with No internet connection.](https://raw.githubusercontent.com/TalhaRiazH/flutter_smart_safe_area_images/main/screenshots/connectivity_offline_banner.png)
@@ -89,33 +95,54 @@ on top of the current route. When the internet returns:
 ## Banner, dialog, toast
 
 ```dart
+// Defaults already: banner + dialog + back-online strip.
+// Opt in to more, or turn defaults off, as you need:
 SmartConnectivityHost.materialBuilder(
   config: const SmartConnectivityConfig(
-    showBanner: true,        // persistent strip on every screen
-    showDialog: true,        // alert when the network drops
-    showOfflineToast: true,  // top toast when offline
-    showOnlineToast: true,   // top toast when back online
-    onlineMessage: 'Back online',
+    showOfflineToast: true,  // optional extra offline toast
+    // showBanner: false,
+    // showDialog: false,
+    // showOnlineToast: false,
   ),
 )
 ```
 
-## Custom banner, dialog, or toast
+## Custom button on the offline dialog
 
-Pass your own widgets. The host still decides when to show and hide them.
+Hidden by default. Opt in with a label + callback (button is lightest grey):
 
 ```dart
 SmartConnectivityHost.materialBuilder(
   config: const SmartConnectivityConfig(
-    showBanner: true,
-    showDialog: true,
-    showOnlineToast: true,
+    dialogActionLabel: 'Open settings',
+    // dismissDialogOnAction: true,
+    // dialogActionBackgroundColor: Color(0xFFF3F4F6),
+    // dialogActionForegroundColor: Color(0xFF6B7280),
   ),
+  onDialogAction: () {
+    // your task
+  },
+)
+```
+
+## Edit banner, dialog, and toast
+
+**Option A — tweak the defaults** with config colors / copy  
+(`bannerBackgroundColor`, `onlineToastBackgroundColor`, `dialogConfirmBackgroundColor`, messages, labels, …).
+
+**Option B — replace them fully** with your own widgets:
+
+```dart
+SmartConnectivityHost.materialBuilder(
   offlineBannerBuilder: (context, controller, config) {
     return YourBanner(message: config.offlineMessage);
   },
-  offlineDialogBuilder: (context, controller, config) {
-    return YourDialog(message: config.offlineMessage);
+  offlineDialogBuilder: (context, controller, config, onDismiss, onAction) {
+    return YourDialog(
+      title: config.dialogTitle,
+      onClose: onDismiss,
+      onCustom: onAction,
+    );
   },
   offlineToastBuilder: (context, controller, config) {
     return YourToast(message: config.offlineMessage);
@@ -132,10 +159,10 @@ Every parameter is optional.
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
-| `showBanner` | `true` | Persistent strip on every screen |
-| `showDialog` | `false` | Dialog when the network drops |
-| `showOfflineToast` | `false` | Top toast when offline |
-| `showOnlineToast` | `true` | Top toast when back online |
+| `showBanner` | `true` | Offline top banner (default on) |
+| `showDialog` | `true` | Offline dialog (default on) |
+| `showOfflineToast` | `false` | Extra offline toast (opt in) |
+| `showOnlineToast` | `true` | Back-online strip (default on) |
 | `showRetryButton` | `true` | Show Retry when the queue is not empty |
 | `barrierDismissible` | `true` | Tap outside to close the dialog |
 | `autoRetry` | `true` | Flush the queue when back online |
@@ -149,6 +176,18 @@ Every parameter is optional.
 | `retryLabel` | `Retry` | Retry button label |
 | `dialogTitle` | `No internet connection` | Default dialog title |
 | `dialogConfirmLabel` | `OK` | Default dialog confirm label |
+| `dialogActionLabel` | `null` | Extra dialog button (hidden unless set + `onDialogAction`) |
+| `dismissDialogOnAction` | `false` | Close dialog after the custom action |
+| `bannerBackgroundColor` | dark | Offline banner background |
+| `bannerForegroundColor` | near-white | Offline banner text |
+| `offlineToastBackgroundColor` | dark | Offline toast background |
+| `offlineToastForegroundColor` | near-white | Offline toast text |
+| `onlineToastBackgroundColor` | bright green | Back-online toast background |
+| `onlineToastForegroundColor` | near-white | Back-online toast text |
+| `dialogConfirmBackgroundColor` | light red | OK button background |
+| `dialogConfirmForegroundColor` | red | OK button text |
+| `dialogActionBackgroundColor` | lightest grey | Custom action button background |
+| `dialogActionForegroundColor` | grey | Custom action button text |
 
 ```dart
 MaterialApp(
