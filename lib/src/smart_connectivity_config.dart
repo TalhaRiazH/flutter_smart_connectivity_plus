@@ -18,7 +18,7 @@ class SmartConnectivityConfig {
     this.offlineToastDuration = const Duration(seconds: 3),
     this.onlineToastDuration = const Duration(seconds: 2),
     this.offlineMessage = 'No internet connection',
-    this.flakyMessage = 'Connected, but no internet',
+    this.flakyMessage = 'Internet interrupted',
     this.onlineMessage = 'Back online',
     this.retryLabel = 'Retry',
     this.dialogTitle = 'No internet connection',

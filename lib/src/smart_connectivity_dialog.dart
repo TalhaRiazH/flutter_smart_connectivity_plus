@@ -30,14 +30,13 @@ class SmartConnectivityDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final message = controller.status == SmartConnectivityStatus.flaky
-        ? config.flakyMessage
-        : config.offlineMessage;
+    final isFlaky = controller.status == SmartConnectivityStatus.flaky;
+    final title = isFlaky ? config.flakyMessage : config.dialogTitle;
+    final message = isFlaky ? config.flakyMessage : config.offlineMessage;
     final showRetry = config.showRetryButton && controller.queueLength > 0;
     final actionLabel = config.dialogActionLabel;
     final showAction =
         actionLabel != null && actionLabel.isNotEmpty && onAction != null;
-    final isFlaky = controller.status == SmartConnectivityStatus.flaky;
 
     return Material(
       color: Colors.transparent,
@@ -84,14 +83,14 @@ class SmartConnectivityDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    config.dialogTitle,
+                    title,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
                     ),
                   ),
-                  if (message != config.dialogTitle) ...[
+                  if (message != title) ...[
                     const SizedBox(height: 10),
                     Text(
                       message,

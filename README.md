@@ -264,7 +264,7 @@ Every parameter is optional.
 | `offlineToastDuration` | `3s` | Offline toast lifetime |
 | `onlineToastDuration` | `2s` | Back-online toast lifetime |
 | `offlineMessage` | `No internet connection` | Offline copy |
-| `flakyMessage` | `Connection is unstable` | Flaky copy |
+| `flakyMessage` | `Internet interrupted` | Linked but unreachable / dropped mid-use |
 | `onlineMessage` | `Back online` | Back-online toast copy |
 | `retryLabel` | `Retry` | Retry button label |
 | `dialogTitle` | `No internet connection` | Default dialog title |

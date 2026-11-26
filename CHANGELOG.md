@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.2
+
+* Flaky copy is now `Internet interrupted` (banner + dialog title).
+
 ## 0.2.1
 
 * Detect Wi‑Fi / cellular with no real internet (OS “!”) via an HTTP reachability probe and treat it as flaky so offline UI shows and APIs stay blocked.
