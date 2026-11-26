@@ -317,7 +317,8 @@ See the `example/` folder: force offline, queue a sync, then come back online an
 
 ## Author
 
-[Talha Riaz](https://www.linkedin.com/in/talha-riaz-7a21a8219/)
+Talha Riaz  
+[https://www.linkedin.com/in/talha-riaz-7a21a8219/](https://www.linkedin.com/in/talha-riaz-7a21a8219/)
 
 ## License
 

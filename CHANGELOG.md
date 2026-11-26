@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file.
 ## 0.2.2
 
 * Flaky copy is now `Internet interrupted` (banner + dialog title).
+* README author section shows the LinkedIn profile under the name.
 
 ## 0.2.1
 
