@@ -31,6 +31,7 @@ This package owns that flow with one host for the whole app.
 | The phone is… | What happens |
 | --- | --- |
 | Offline | Banner shows. New work can wait in a queue. |
+| Wi‑Fi / cellular on, but no internet (OS “!”) | Treated as flaky — same offline UI; APIs stay blocked. |
 | Back online | Queued work retries automatically. |
 | Same action tapped twice | One queue entry — same id is not duplicated. |
 | App is closed and reopened | Durable actions are restored and replayed. |
@@ -70,6 +71,18 @@ That completes setup. Offline handling is now active across your app.
 ## What more can be done
 
 The steps above are enough for most apps. Use the sections below when you need queuing, a queue that survives restart, session refresh on replay, a submit button, or custom offline UI.
+
+## Wi‑Fi connected but no internet
+
+`connectivity_plus` only sees the link. This package also probes a real URL (`generate_204` by default) so a Wi‑Fi “!” / dead ISP / captive portal becomes **flaky**: offline UI shows and `isOnline` stays `false` so APIs are not fired.
+
+```dart
+SmartConnectivityConfig(
+  checkRealInternet: true, // default
+  internetCheckInterval: Duration(seconds: 15),
+  internetCheckTimeout: Duration(seconds: 3),
+)
+```
 
 ## Queue work from any screen
 
@@ -304,8 +317,7 @@ See the `example/` folder: force offline, queue a sync, then come back online an
 
 ## Author
 
-Talha Riaz  
-[LinkedIn](https://www.linkedin.com/in/talha-riaz-7a21a8219/)
+[Talha Riaz](https://www.linkedin.com/in/talha-riaz-7a21a8219/)
 
 ## License
 

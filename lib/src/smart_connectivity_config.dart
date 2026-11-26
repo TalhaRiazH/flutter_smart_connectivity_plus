@@ -18,13 +18,17 @@ class SmartConnectivityConfig {
     this.offlineToastDuration = const Duration(seconds: 3),
     this.onlineToastDuration = const Duration(seconds: 2),
     this.offlineMessage = 'No internet connection',
-    this.flakyMessage = 'Connection is unstable',
+    this.flakyMessage = 'Connected, but no internet',
     this.onlineMessage = 'Back online',
     this.retryLabel = 'Retry',
     this.dialogTitle = 'No internet connection',
     this.dialogConfirmLabel = 'OK',
     this.dialogActionLabel,
     this.dismissDialogOnAction = false,
+    this.checkRealInternet = true,
+    this.internetCheckTimeout = const Duration(seconds: 3),
+    this.internetCheckInterval = const Duration(seconds: 15),
+    this.internetCheckUrl = 'https://www.gstatic.com/generate_204',
     this.bannerBackgroundColor = const Color(0xFF111827),
     this.bannerForegroundColor = const Color(0xFFF9FAFB),
     this.offlineToastBackgroundColor = const Color(0xFF111827),
@@ -73,11 +77,26 @@ class SmartConnectivityConfig {
   /// Banner / dialog / toast body text while offline.
   final String offlineMessage;
 
-  /// Banner / dialog / toast body text while the connection looks flaky.
+  /// Banner / dialog / toast body text while linked but without internet
+  /// (Wi‑Fi "!" / captive portal).
   final String flakyMessage;
 
   /// Top toast text when the network returns.
   final String onlineMessage;
+
+  /// When `true`, probes a real URL after the OS reports a link so Wi‑Fi
+  /// without internet is treated as [SmartConnectivityStatus.flaky].
+  final bool checkRealInternet;
+
+  /// Timeout for each internet probe.
+  final Duration internetCheckTimeout;
+
+  /// How often to re-probe while a link is present (catches internet dropping
+  /// without a Wi‑Fi disconnect).
+  final Duration internetCheckInterval;
+
+  /// URL used by the default HTTP probe (`generate_204` expected).
+  final String internetCheckUrl;
 
   /// Label on the retry control.
   final String retryLabel;
@@ -152,6 +171,10 @@ class SmartConnectivityConfig {
     String? dialogActionLabel,
     bool clearDialogActionLabel = false,
     bool? dismissDialogOnAction,
+    bool? checkRealInternet,
+    Duration? internetCheckTimeout,
+    Duration? internetCheckInterval,
+    String? internetCheckUrl,
     Color? bannerBackgroundColor,
     Color? bannerForegroundColor,
     Color? offlineToastBackgroundColor,
@@ -186,6 +209,12 @@ class SmartConnectivityConfig {
           : (dialogActionLabel ?? this.dialogActionLabel),
       dismissDialogOnAction:
           dismissDialogOnAction ?? this.dismissDialogOnAction,
+      checkRealInternet: checkRealInternet ?? this.checkRealInternet,
+      internetCheckTimeout:
+          internetCheckTimeout ?? this.internetCheckTimeout,
+      internetCheckInterval:
+          internetCheckInterval ?? this.internetCheckInterval,
+      internetCheckUrl: internetCheckUrl ?? this.internetCheckUrl,
       bannerBackgroundColor:
           bannerBackgroundColor ?? this.bannerBackgroundColor,
       bannerForegroundColor:
@@ -232,6 +261,10 @@ class SmartConnectivityConfig {
         other.dialogConfirmLabel == dialogConfirmLabel &&
         other.dialogActionLabel == dialogActionLabel &&
         other.dismissDialogOnAction == dismissDialogOnAction &&
+        other.checkRealInternet == checkRealInternet &&
+        other.internetCheckTimeout == internetCheckTimeout &&
+        other.internetCheckInterval == internetCheckInterval &&
+        other.internetCheckUrl == internetCheckUrl &&
         other.bannerBackgroundColor == bannerBackgroundColor &&
         other.bannerForegroundColor == bannerForegroundColor &&
         other.offlineToastBackgroundColor == offlineToastBackgroundColor &&
@@ -265,6 +298,10 @@ class SmartConnectivityConfig {
     dialogConfirmLabel,
     dialogActionLabel,
     dismissDialogOnAction,
+    checkRealInternet,
+    internetCheckTimeout,
+    internetCheckInterval,
+    internetCheckUrl,
     bannerBackgroundColor,
     bannerForegroundColor,
     offlineToastBackgroundColor,

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'smart_connectivity_action.dart';
 import 'smart_connectivity_config.dart';
 import 'smart_connectivity_queue_store.dart';
+import 'smart_connectivity_reachability.dart';
 import 'smart_connectivity_status.dart';
 
 /// Runs before the queue replays. Return `false` to pause the flush, for
@@ -22,6 +23,10 @@ typedef SmartConnectivityActionDropped =
 /// * Session actions (`runOrEnqueue`, `enqueue` with `run`) stay in memory.
 /// * Durable actions (`enqueueDurable`) are saved to [queueStore] and replay
 ///   after an app restart through a handler from [registerHandler].
+///
+/// When [SmartConnectivityConfig.checkRealInternet] is `true`, a link from
+/// [connectivity_plus] is verified with [reachability] so Wi‑Fi without
+/// internet (the OS "!" icon) becomes [SmartConnectivityStatus.flaky].
 class SmartConnectivityController extends ChangeNotifier {
   /// Creates a controller with [config].
   ///
@@ -32,27 +37,46 @@ class SmartConnectivityController extends ChangeNotifier {
   /// actions survive an app restart. [beforeFlush] runs once before each
   /// replay, so you can refresh an expired session. [onAuthExpired] runs when
   /// a handler throws [SmartConnectivityAuthException].
+  ///
+  /// Pass [reachability] to customize or mock the real-internet probe.
+  ///
+  /// [checkConnectivity] / [onConnectivityChanged] override the platform
+  /// [Connectivity] APIs (useful in unit tests).
   SmartConnectivityController({
     SmartConnectivityConfig config = const SmartConnectivityConfig(),
     Connectivity? connectivity,
+    Future<List<ConnectivityResult>> Function()? checkConnectivity,
+    Stream<List<ConnectivityResult>>? onConnectivityChanged,
     SmartConnectivityStatus? statusOverride,
     SmartConnectivityQueueStore? queueStore,
+    SmartConnectivityReachability? reachability,
     this.beforeFlush,
     this.onAuthExpired,
     this.onActionDropped,
-  }) : _config = config, // ignore: prefer_initializing_formals
-       _connectivity = connectivity ?? Connectivity(),
+  }) : _config = config,
+       _connectivity = connectivity,
+       _checkConnectivityOverride = checkConnectivity,
+       _onConnectivityChangedOverride = onConnectivityChanged,
        _statusOverride = statusOverride,
        _status = statusOverride ?? SmartConnectivityStatus.online,
+       _injectedReachability = reachability,
        queueStore = queueStore ?? MemorySmartConnectivityQueueStore();
 
-  final Connectivity _connectivity;
+  Connectivity? _connectivity;
+  final Future<List<ConnectivityResult>> Function()?
+  _checkConnectivityOverride;
+  final Stream<List<ConnectivityResult>>? _onConnectivityChangedOverride;
   SmartConnectivityConfig _config;
   SmartConnectivityStatus _status;
   SmartConnectivityStatus? _statusOverride;
+  final SmartConnectivityReachability? _injectedReachability;
+  SmartConnectivityReachability? _defaultReachability;
   final List<SmartConnectivityAction> _queue = [];
   final Map<String, SmartConnectivityHandler> _handlers = {};
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  Timer? _probeTimer;
+  int _probeGeneration = 0;
+  bool _linkUp = false;
   bool _flushing = false;
   bool _restored = false;
   Future<void>? _restoring;
@@ -87,6 +111,15 @@ class SmartConnectivityController extends ChangeNotifier {
   /// Number of actions waiting in the queue.
   int get queueLength => _queue.length;
 
+  SmartConnectivityReachability get _effectiveReachability {
+    final injected = _injectedReachability;
+    if (injected != null) return injected;
+    return _defaultReachability ??= SmartConnectivityReachability.http(
+      uri: Uri.parse(_config.internetCheckUrl),
+      timeout: _config.internetCheckTimeout,
+    );
+  }
+
   /// Starts listening for connectivity changes and restores saved actions.
   Future<void> start() async {
     await restoreQueue();
@@ -98,10 +131,24 @@ class SmartConnectivityController extends ChangeNotifier {
     }
     await _refreshFromConnectivity();
     await _subscription?.cancel();
-    _subscription = _connectivity.onConnectivityChanged.listen((results) {
-      _applyConnectivity(results);
+    _subscription = _connectivityStream().listen((results) {
+      unawaited(_applyConnectivity(results));
     });
     if (isOnline && _config.autoRetry) unawaited(flush());
+  }
+
+  Connectivity get _platformConnectivity =>
+      _connectivity ??= Connectivity();
+
+  Future<List<ConnectivityResult>> _readConnectivity() {
+    final override = _checkConnectivityOverride;
+    if (override != null) return override();
+    return _platformConnectivity.checkConnectivity();
+  }
+
+  Stream<List<ConnectivityResult>> _connectivityStream() {
+    return _onConnectivityChangedOverride ??
+        _platformConnectivity.onConnectivityChanged;
   }
 
   /// Loads durable actions from [queueStore]. Safe to call more than once.
@@ -130,6 +177,7 @@ class SmartConnectivityController extends ChangeNotifier {
   @override
   void dispose() {
     _subscription?.cancel();
+    _probeTimer?.cancel();
     super.dispose();
   }
 
@@ -137,12 +185,16 @@ class SmartConnectivityController extends ChangeNotifier {
   void updateConfig(SmartConnectivityConfig config) {
     if (_config == config) return;
     _config = config;
+    // Rebuild the default probe with the new URL / timeout next time.
+    _defaultReachability = null;
+    _syncProbeTimer();
     notifyListeners();
   }
 
   /// Forces [status] for demos and tests. Pass `null` to follow the device again.
   void debugOverrideStatus(SmartConnectivityStatus? status) {
     _statusOverride = status;
+    _probeTimer?.cancel();
     if (status == null) {
       unawaited(_refreshFromConnectivity());
       return;
@@ -161,6 +213,16 @@ class SmartConnectivityController extends ChangeNotifier {
     _status = SmartConnectivityStatus.flaky;
     _statusOverride ??= SmartConnectivityStatus.flaky;
     notifyListeners();
+  }
+
+  /// Re-runs the real-internet probe now (for a Retry button while flaky).
+  Future<void> checkInternetNow() async {
+    if (_statusOverride != null) return;
+    if (!_linkUp) {
+      await _refreshFromConnectivity();
+      return;
+    }
+    await _probeInternet();
   }
 
   /// Registers the [handler] that runs durable actions of [type].
@@ -285,7 +347,12 @@ class SmartConnectivityController extends ChangeNotifier {
   }
 
   /// Manually retries the queue (banner Retry, or after a session refresh).
-  Future<void> retryNow() => flush();
+  Future<void> retryNow() async {
+    if (!isOnline && _linkUp && _config.checkRealInternet) {
+      await checkInternetNow();
+    }
+    await flush();
+  }
 
   /// Runs queued actions while online, up to [SmartConnectivityConfig.maxRetries].
   ///
@@ -372,23 +439,66 @@ class SmartConnectivityController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    final results = await _connectivity.checkConnectivity();
-    _applyConnectivity(results);
+    final results = await _readConnectivity();
+    await _applyConnectivity(results);
   }
 
-  void _applyConnectivity(List<ConnectivityResult> results) {
+  Future<void> _applyConnectivity(List<ConnectivityResult> results) async {
     if (_statusOverride != null) return;
     final offline =
         results.isEmpty ||
         results.every((result) => result == ConnectivityResult.none);
-    final next = offline
-        ? SmartConnectivityStatus.offline
-        : SmartConnectivityStatus.online;
+    _linkUp = !offline;
+    _syncProbeTimer();
+
+    if (offline) {
+      _setStatus(SmartConnectivityStatus.offline);
+      return;
+    }
+
+    if (!_config.checkRealInternet) {
+      _setStatus(SmartConnectivityStatus.online);
+      return;
+    }
+
+    await _probeInternet();
+  }
+
+  Future<void> _probeInternet() async {
+    if (_statusOverride != null || !_linkUp) return;
+    if (!_config.checkRealInternet) {
+      _setStatus(SmartConnectivityStatus.online);
+      return;
+    }
+
+    final generation = ++_probeGeneration;
+    final ok = await _effectiveReachability.hasInternetAccess();
+    if (generation != _probeGeneration || _statusOverride != null) return;
+    if (!_linkUp) return;
+
+    _setStatus(
+      ok ? SmartConnectivityStatus.online : SmartConnectivityStatus.flaky,
+    );
+  }
+
+  void _setStatus(SmartConnectivityStatus next) {
     if (next == _status) return;
     _status = next;
     notifyListeners();
     if (isOnline && _config.autoRetry) {
       unawaited(flush());
     }
+  }
+
+  void _syncProbeTimer() {
+    _probeTimer?.cancel();
+    _probeTimer = null;
+    if (_statusOverride != null) return;
+    if (!_linkUp || !_config.checkRealInternet) return;
+    final interval = _config.internetCheckInterval;
+    if (interval <= Duration.zero) return;
+    _probeTimer = Timer.periodic(interval, (_) {
+      unawaited(_probeInternet());
+    });
   }
 }

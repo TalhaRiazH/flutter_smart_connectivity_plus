@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.1
+
+* Detect Wi‑Fi / cellular with no real internet (OS “!”) via an HTTP reachability probe and treat it as flaky so offline UI shows and APIs stay blocked.
+* Add `checkRealInternet`, `internetCheckUrl`, `internetCheckTimeout`, `internetCheckInterval`, and `SmartConnectivityReachability`.
+
 ## 0.2.0
 
 * Add a durable queue that survives app restart: `registerHandler`, `enqueueDurable`, `runOrEnqueueDurable`, and `SmartConnectivityQueueStore` with `SharedPreferencesQueueStore`.

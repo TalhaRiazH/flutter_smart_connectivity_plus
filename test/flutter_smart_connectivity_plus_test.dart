@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_connectivity_plus/flutter_smart_connectivity_plus.dart';
@@ -12,7 +15,107 @@ void main() {
     expect(config.showOfflineToast, isFalse);
     expect(config.autoRetry, isTrue);
     expect(config.maxRetries, 3);
+    expect(config.checkRealInternet, isTrue);
     expect(config, equals(const SmartConnectivityConfig()));
+  });
+
+  test('wifi without internet becomes flaky and blocks APIs', () async {
+    final changes =
+        StreamController<List<ConnectivityResult>>.broadcast();
+    final controller = SmartConnectivityController(
+      checkConnectivity: () async => const [ConnectivityResult.wifi],
+      onConnectivityChanged: changes.stream,
+      reachability: const AlwaysOfflineReachability(),
+      config: const SmartConnectivityConfig(
+        autoRetry: false,
+        checkRealInternet: true,
+        internetCheckInterval: Duration(days: 1),
+      ),
+    );
+    await controller.start();
+    await pumpEventQueue();
+
+    expect(controller.status, SmartConnectivityStatus.flaky);
+    expect(controller.isOnline, isFalse);
+
+    var ran = 0;
+    final queued = await controller.runOrEnqueue('api', () async {
+      ran += 1;
+    });
+    expect(queued, isFalse);
+    expect(ran, 0);
+    expect(controller.queueLength, 1);
+    await changes.close();
+    controller.dispose();
+  });
+
+  test('wifi with working internet stays online', () async {
+    final changes =
+        StreamController<List<ConnectivityResult>>.broadcast();
+    final controller = SmartConnectivityController(
+      checkConnectivity: () async => const [ConnectivityResult.wifi],
+      onConnectivityChanged: changes.stream,
+      reachability: const AlwaysOnlineReachability(),
+      config: const SmartConnectivityConfig(
+        autoRetry: false,
+        checkRealInternet: true,
+        internetCheckInterval: Duration(days: 1),
+      ),
+    );
+    await controller.start();
+    await pumpEventQueue();
+
+    expect(controller.status, SmartConnectivityStatus.online);
+    expect(controller.isOnline, isTrue);
+    await changes.close();
+    controller.dispose();
+  });
+
+  test('link loss is offline without probing', () async {
+    final changes =
+        StreamController<List<ConnectivityResult>>.broadcast();
+    final controller = SmartConnectivityController(
+      checkConnectivity: () async => const [ConnectivityResult.none],
+      onConnectivityChanged: changes.stream,
+      reachability: const AlwaysOnlineReachability(),
+      config: const SmartConnectivityConfig(
+        autoRetry: false,
+        checkRealInternet: true,
+        internetCheckInterval: Duration(days: 1),
+      ),
+    );
+    await controller.start();
+    await pumpEventQueue();
+
+    expect(controller.status, SmartConnectivityStatus.offline);
+    expect(controller.isOnline, isFalse);
+    await changes.close();
+    controller.dispose();
+  });
+
+  test('probe recovery moves flaky back to online', () async {
+    var hasInternet = false;
+    final changes =
+        StreamController<List<ConnectivityResult>>.broadcast();
+    final controller = SmartConnectivityController(
+      checkConnectivity: () async => const [ConnectivityResult.wifi],
+      onConnectivityChanged: changes.stream,
+      reachability: FunctionReachability(() async => hasInternet),
+      config: const SmartConnectivityConfig(
+        autoRetry: false,
+        checkRealInternet: true,
+        internetCheckInterval: Duration(days: 1),
+      ),
+    );
+    await controller.start();
+    await pumpEventQueue();
+    expect(controller.status, SmartConnectivityStatus.flaky);
+
+    hasInternet = true;
+    await controller.checkInternetNow();
+    expect(controller.status, SmartConnectivityStatus.online);
+    await changes.close();
+    controller.dispose();
   });
 
   test('enqueue dedupes by id', () async {

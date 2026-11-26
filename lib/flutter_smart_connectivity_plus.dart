@@ -19,6 +19,7 @@ export 'src/smart_connectivity_controller.dart';
 export 'src/smart_connectivity_dialog.dart';
 export 'src/smart_connectivity_host.dart';
 export 'src/smart_connectivity_queue_store.dart';
+export 'src/smart_connectivity_reachability.dart';
 export 'src/smart_connectivity_scope.dart';
 export 'src/smart_connectivity_status.dart';
 export 'src/smart_connectivity_submit.dart';
