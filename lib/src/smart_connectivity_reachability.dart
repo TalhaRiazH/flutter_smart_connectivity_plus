@@ -1,5 +1,6 @@
-import 'smart_connectivity_reachability_impl.dart'
-    if (dart.library.html) 'smart_connectivity_reachability_web.dart';
+// Default = no dart:io (web + WASM). IO probe only when dart:io exists.
+import 'smart_connectivity_reachability_web.dart'
+    if (dart.library.io) 'smart_connectivity_reachability_impl.dart';
 
 /// Checks whether the device can actually reach the internet.
 ///

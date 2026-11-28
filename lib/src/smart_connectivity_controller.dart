@@ -53,20 +53,21 @@ class SmartConnectivityController extends ChangeNotifier {
     this.beforeFlush,
     this.onAuthExpired,
     this.onActionDropped,
-  }) : _config = config,
-       _connectivity = connectivity,
-       _checkConnectivityOverride = checkConnectivity,
+  }) : _checkConnectivityOverride = checkConnectivity,
        _onConnectivityChangedOverride = onConnectivityChanged,
        _statusOverride = statusOverride,
        _status = statusOverride ?? SmartConnectivityStatus.online,
        _injectedReachability = reachability,
-       queueStore = queueStore ?? MemorySmartConnectivityQueueStore();
+       queueStore = queueStore ?? MemorySmartConnectivityQueueStore() {
+    _config = config;
+    _connectivity = connectivity;
+  }
 
   Connectivity? _connectivity;
   final Future<List<ConnectivityResult>> Function()?
   _checkConnectivityOverride;
   final Stream<List<ConnectivityResult>>? _onConnectivityChangedOverride;
-  SmartConnectivityConfig _config;
+  late SmartConnectivityConfig _config;
   SmartConnectivityStatus _status;
   SmartConnectivityStatus? _statusOverride;
   final SmartConnectivityReachability? _injectedReachability;

@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.3
+
+* Fix WASM / web reachability imports and clear static-analysis infos for a higher pub score.
+
 ## 0.2.2
 
 * Flaky copy is now `Internet interrupted` (banner + dialog title).

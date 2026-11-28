@@ -1,9 +1,9 @@
 import 'smart_connectivity_reachability.dart';
 
-/// Creates the default web reachability checker.
+/// Creates the default reachability checker when `dart:io` is unavailable
+/// (web / WASM).
 ///
-/// Browsers block cross-origin probes (CORS), so the default web
-/// implementation cannot reliably hit `generate_204`. It reports online and
+/// Browsers block cross-origin probes (CORS), so this reports online and
 /// relies on [connectivity_plus] / the browser. Pass a custom
 /// [SmartConnectivityReachability] if you probe a same-origin health URL.
 SmartConnectivityReachability createDefaultReachability({
